@@ -1,6 +1,6 @@
 -- +goose Up
 ALTER TABLE boards
-ADD COLUMN game_id UUID NOT NULL REFERENCES games(id) ON DELETE CASCADE;
+ADD COLUMN game_id UUID REFERENCES games(id) ON DELETE CASCADE;
 
 -- +goose Down
 ALTER TABLE boards

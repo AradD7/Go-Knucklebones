@@ -1,10 +1,11 @@
 -- +goose Up
 CREATE TABLE games(
-    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    created_at  TIMESTAMP NOT NULL DEFAULT NOW(),
-    updated_at  TIMESTAMP NOT NULL DEFAULT NOW(),
-    table_p1    UUID NOT NULL REFERENCES boards(id),
-    table_p2    UUID NOT NULL REFERENCES boards(id)
+    id          UUID PRIMARY KEY,
+    created_at  TIMESTAMP NOT NULL,
+    updated_at  TIMESTAMP NOT NULL,
+    board1      UUID NOT NULL REFERENCES boards(id),
+    board2      UUID NOT NULL REFERENCES boards(id),
+    winner      UUID DEFAULT NULL REFERENCES players(id)
 );
 
 -- +goose Down

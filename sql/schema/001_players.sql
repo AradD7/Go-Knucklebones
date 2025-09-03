@@ -1,10 +1,11 @@
 -- +goose Up
 CREATE TABLE players(
-    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    created_at  TIMESTAMP NOT NULL DEFAULT NOW(),
-    updated_at  TIMESTAMP NOT NULL DEFAULT NOW(),
-    name        VARCHAR(8),
-    avatar      TEXT
+    id              UUID PRIMARY KEY,
+    created_at      TIMESTAMP NOT NULL,
+    updated_at      TIMESTAMP NOT NULL,
+    username        VARCHAR(8) NOT NULL UNIQUE,
+    avatar          TEXT,
+    hashed_password TEXT NOT NULL
 );
 
 -- +goose Down

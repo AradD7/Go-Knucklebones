@@ -1,10 +1,11 @@
 -- +goose Up
 CREATE TABLE boards (
-    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    created_at  TIMESTAMP NOT NULL DEFAULT NOW(),
-    updated_at  TIMESTAMP NOT NULL DEFAULT NOW(),
-    cells       INTEGER[3][3] DEFAULT ARRAY[]::INTEGER[][],
+    id          UUID PRIMARY KEY,
+    created_at  TIMESTAMP NOT NULL,
+    updated_at  TIMESTAMP NOT NULL,
+    board       INTEGER[3][3] NOT NULL,
     player_id   UUID NOT NULL REFERENCES players(id) ON DELETE CASCADE
+
 );
 
 -- +goose Down
