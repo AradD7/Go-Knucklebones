@@ -14,3 +14,4 @@ RETURNING *;
 UPDATE boards
 SET game_id = $2
 WHERE id = $1;
+--

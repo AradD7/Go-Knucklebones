@@ -13,3 +13,4 @@ RETURNING *;
 UPDATE games
 SET winner = $2
 WHERE id = $1;
+--

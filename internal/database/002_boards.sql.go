@@ -21,7 +21,7 @@ VALUES (
     ARRAY[]::INTEGER[][],
     $1
 )
-RETURNING id, created_at, updated_at, board, player_id, game_id
+RETURNING id, created_at, updated_at, board, player_id, game_id, score
 `
 
 func (q *Queries) CreateBoard(ctx context.Context, playerID uuid.UUID) (Board, error) {
@@ -34,6 +34,7 @@ func (q *Queries) CreateBoard(ctx context.Context, playerID uuid.UUID) (Board, e
 		pq.Array(&i.Board),
 		&i.PlayerID,
 		&i.GameID,
+		&i.Score,
 	)
 	return i, err
 }

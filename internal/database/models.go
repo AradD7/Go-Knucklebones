@@ -18,6 +18,7 @@ type Board struct {
 	Board     [][]int32
 	PlayerID  uuid.UUID
 	GameID    uuid.NullUUID
+	Score     sql.NullInt32
 }
 
 type Game struct {

@@ -7,6 +7,8 @@ package database
 
 import (
 	"context"
+
+	"github.com/google/uuid"
 )
 
 const createPlayer = `-- name: CreatePlayer :one
@@ -28,6 +30,46 @@ type CreatePlayerParams struct {
 
 func (q *Queries) CreatePlayer(ctx context.Context, arg CreatePlayerParams) (Player, error) {
 	row := q.db.QueryRowContext(ctx, createPlayer, arg.Username, arg.HashedPassword)
+	var i Player
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Username,
+		&i.Avatar,
+		&i.HashedPassword,
+	)
+	return i, err
+}
+
+const getPlayerByPlayerId = `-- name: GetPlayerByPlayerId :one
+
+SELECT id, created_at, updated_at, username, avatar, hashed_password FROM players
+WHERE id = $1
+`
+
+func (q *Queries) GetPlayerByPlayerId(ctx context.Context, id uuid.UUID) (Player, error) {
+	row := q.db.QueryRowContext(ctx, getPlayerByPlayerId, id)
+	var i Player
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Username,
+		&i.Avatar,
+		&i.HashedPassword,
+	)
+	return i, err
+}
+
+const getPlayerByUsername = `-- name: GetPlayerByUsername :one
+
+SELECT id, created_at, updated_at, username, avatar, hashed_password FROM players
+WHERE username = $1
+`
+
+func (q *Queries) GetPlayerByUsername(ctx context.Context, username string) (Player, error) {
+	row := q.db.QueryRowContext(ctx, getPlayerByUsername, username)
 	var i Player
 	err := row.Scan(
 		&i.ID,

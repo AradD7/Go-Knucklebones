@@ -9,3 +9,13 @@ VALUES (
 )
 RETURNING *;
 --
+
+-- name: GetPlayerByUsername :one
+SELECT * FROM players
+WHERE username = $1;
+--
+
+-- name: GetPlayerByPlayerId :one
+SELECT * FROM players
+WHERE id = $1;
+--

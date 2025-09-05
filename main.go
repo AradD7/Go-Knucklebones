@@ -15,6 +15,7 @@ import (
 type apiConfig struct {
 	db 			*database.Queries
 	tokenSecret	string
+	platform 	string
 }
 
 func main() {
@@ -33,13 +34,22 @@ func main() {
 	apiCfg := apiConfig{
 		db: 		 database.New(db),
 		tokenSecret: secret,
+		platform: 	 os.Getenv("PLATFORM"),
 	}
 
 	mux := http.NewServeMux()
+	mux.HandleFunc("POST /admin/reset", apiCfg.handlerReset)
+
 	mux.HandleFunc("POST /api/players", apiCfg.handlerNewPlayer)
-	mux.HandleFunc("POST /api/games", apiCfg.handlerNewGame)
+	mux.HandleFunc("POST /api/players/login", apiCfg.handlerPlayerLogin)
 
+	//mux.HandleFunc("POST /api/rolls", apiCfg.handlerRoll)
 
+	//mux.HandleFunc("GET /api/games", apiCfg.handlerNewGame) returns all games for player
+	//mux.HandleFunc("POST /api/games/{game_id}", apiCfg.handlerNewGame) returns specific game
+	mux.HandleFunc("POST /api/games/new", apiCfg.handlerNewGame)
+
+	//mux.HandleFunc("POST /api/moves", apiCfg.handlerNewGame)
 
 	srv := &http.Server{
 		Handler: mux,
