@@ -11,6 +11,17 @@ RETURNING *;
 
 -- name: SetGameWinner :exec
 UPDATE games
-SET winner = $2
+SET winner = $2, updated_at = NOW()
+WHERE id = $1;
+--
+
+-- name: GetGameById :one
+SELECT * FROM games
+WHERE id = $1;
+--
+
+-- name: UpdateGame :exec
+UPDATE games
+SET updated_at = NOW()
 WHERE id = $1;
 --

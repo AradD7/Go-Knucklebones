@@ -38,18 +38,20 @@ func main() {
 	}
 
 	mux := http.NewServeMux()
+
+	mux.Handle("/app/", http.StripPrefix("/app", http.FileServer(http.Dir(filepathRoot))))
+
 	mux.HandleFunc("POST /admin/reset", apiCfg.handlerReset)
 
 	mux.HandleFunc("POST /api/players", apiCfg.handlerNewPlayer)
 	mux.HandleFunc("POST /api/players/login", apiCfg.handlerPlayerLogin)
 
-	//mux.HandleFunc("POST /api/rolls", apiCfg.handlerRoll)
+	mux.HandleFunc("GET /api/rolls", handlerRoll)
 
-	//mux.HandleFunc("GET /api/games", apiCfg.handlerNewGame) returns all games for player
-	//mux.HandleFunc("POST /api/games/{game_id}", apiCfg.handlerNewGame) returns specific game
+	mux.HandleFunc("GET /api/games", apiCfg.handlerGetGames)
+	mux.HandleFunc("GET /api/games/{game_id}", apiCfg.handlerGetGame)
 	mux.HandleFunc("POST /api/games/new", apiCfg.handlerNewGame)
-
-	//mux.HandleFunc("POST /api/moves", apiCfg.handlerNewGame)
+	mux.HandleFunc("PUT /api/games/{game_id}", apiCfg.handlerMakeMove)
 
 	srv := &http.Server{
 		Handler: mux,

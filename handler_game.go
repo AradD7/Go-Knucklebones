@@ -10,11 +10,15 @@ import (
 	"github.com/google/uuid"
 )
 
-type InitGame struct{
+type Game struct{
 	Id 					uuid.UUID `json:"id"`
 	CreatedAt 			time.Time `json:"created_at"`
 	Player1Username 	string 	  `json:"player1_username"`
 	Player2Username 	string 	  `json:"player2_username"`
+}
+
+type GameIds struct {
+	Ids 	[]uuid.UUID `json:"ids"`
 }
 
 func (cfg *apiConfig) handlerNewGame(w http.ResponseWriter, r *http.Request) {
@@ -23,7 +27,7 @@ func (cfg *apiConfig) handlerNewGame(w http.ResponseWriter, r *http.Request) {
 	}
 	token, err := auth.GetBearerToken(r.Header)
 	if err != nil {
-		respondWithError(w, http.StatusNotFound, "Failed to get JWT token from request header", err)
+		respondWithError(w, http.StatusNotFound, "Not Authorized", err)
 		return
 	}
 
@@ -34,13 +38,13 @@ func (cfg *apiConfig) handlerNewGame(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userId, err := auth.ValidateJWT(token, cfg.tokenSecret)
+	playerId, err := auth.ValidateJWT(token, cfg.tokenSecret)
 	if err != nil {
 		respondWithError(w, http.StatusUnauthorized, "Token is exipred, refresh JWT token or login again", err)
 		return
 	}
 
-	player1, err := cfg.db.GetPlayerByPlayerId(r.Context(), userId)
+	player1, err := cfg.db.GetPlayerByPlayerId(r.Context(), playerId)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Faild to get player from DB", err)
 		return
@@ -94,10 +98,70 @@ func (cfg *apiConfig) handlerNewGame(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	respondWithJSON(w, http.StatusCreated, InitGame{
+	respondWithJSON(w, http.StatusCreated, Game{
 		Id: 				newGame.ID,
 		CreatedAt: 			newGame.CreatedAt,
 		Player1Username:  	player1.Username,
 		Player2Username: 	player2.Username,
+	})
+}
+
+func (cfg *apiConfig) handlerGetGames(w http.ResponseWriter, r *http.Request) {
+	token, err := auth.GetBearerToken(r.Header)
+	if err != nil {
+		respondWithError(w, http.StatusNotFound, "Failed to get JWT token from request header", err)
+		return
+	}
+
+	playerId, err := auth.ValidateJWT(token, cfg.tokenSecret)
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "Token is exipred, refresh JWT token or login again", err)
+		return
+	}
+
+	gameIds, err := cfg.db.GetGamesWithPlayerId(r.Context(), playerId)
+	if err != nil {
+		respondWithError(w, http.StatusNotFound, "Faild to get player games from DB", err)
+		return
+	}
+
+	var games GameIds
+	for _, id := range gameIds {
+		games.Ids = append(games.Ids, id.UUID)
+	}
+
+	respondWithJSON(w, http.StatusOK, games)
+}
+
+func (cfg *apiConfig) handlerGetGame(w http.ResponseWriter, r *http.Request) {
+	gameId, err := uuid.Parse(r.PathValue("game_id"))
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "Game ID is not valid", err)
+		return
+	}
+
+	game, err := cfg.db.GetGameById(r.Context(), gameId)
+	if err != nil {
+		respondWithError(w, http.StatusNotFound, "Faild to get game from DB", err)
+		return
+	}
+
+	player1Username, err := cfg.db.GetPlayerUsernameByBoardId(r.Context(), game.Board1)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Faild to get player1 from DB", err)
+		return
+	}
+
+	player2Username, err := cfg.db.GetPlayerUsernameByBoardId(r.Context(), game.Board2)
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "Faild to get player2 from DB", err)
+		return
+	}
+
+	respondWithJSON(w, http.StatusOK, Game{
+		Id: 				game.ID,
+		CreatedAt: 			game.CreatedAt,
+		Player1Username:  	player1Username.String,
+		Player2Username: 	player2Username.String,
 	})
 }

@@ -7,6 +7,7 @@ package database
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/google/uuid"
 	"github.com/lib/pq"
@@ -39,10 +40,102 @@ func (q *Queries) CreateBoard(ctx context.Context, playerID uuid.UUID) (Board, e
 	return i, err
 }
 
+const getBoardById = `-- name: GetBoardById :one
+
+SELECT id, created_at, updated_at, board, player_id, game_id, score FROM boards
+WHERE id = $1
+`
+
+func (q *Queries) GetBoardById(ctx context.Context, id uuid.UUID) (Board, error) {
+	row := q.db.QueryRowContext(ctx, getBoardById, id)
+	var i Board
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		pq.Array(&i.Board),
+		&i.PlayerID,
+		&i.GameID,
+		&i.Score,
+	)
+	return i, err
+}
+
+const getBoardByPlayerIdAndGameId = `-- name: GetBoardByPlayerIdAndGameId :one
+
+SELECT id, created_at, updated_at, board, player_id, game_id, score FROM boards
+WHERE game_id = $1 AND player_id = $2
+`
+
+type GetBoardByPlayerIdAndGameIdParams struct {
+	GameID   uuid.NullUUID
+	PlayerID uuid.UUID
+}
+
+func (q *Queries) GetBoardByPlayerIdAndGameId(ctx context.Context, arg GetBoardByPlayerIdAndGameIdParams) (Board, error) {
+	row := q.db.QueryRowContext(ctx, getBoardByPlayerIdAndGameId, arg.GameID, arg.PlayerID)
+	var i Board
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		pq.Array(&i.Board),
+		&i.PlayerID,
+		&i.GameID,
+		&i.Score,
+	)
+	return i, err
+}
+
+const getGamesWithPlayerId = `-- name: GetGamesWithPlayerId :many
+
+SELECT game_id
+FROM boards
+WHERE player_id = $1
+`
+
+func (q *Queries) GetGamesWithPlayerId(ctx context.Context, playerID uuid.UUID) ([]uuid.NullUUID, error) {
+	rows, err := q.db.QueryContext(ctx, getGamesWithPlayerId, playerID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []uuid.NullUUID
+	for rows.Next() {
+		var game_id uuid.NullUUID
+		if err := rows.Scan(&game_id); err != nil {
+			return nil, err
+		}
+		items = append(items, game_id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getPlayerUsernameByBoardId = `-- name: GetPlayerUsernameByBoardId :one
+
+SELECT players.username
+FROM boards
+LEFT JOIN players ON players.id = boards.player_id
+WHERE boards.id = $1
+`
+
+func (q *Queries) GetPlayerUsernameByBoardId(ctx context.Context, id uuid.UUID) (sql.NullString, error) {
+	row := q.db.QueryRowContext(ctx, getPlayerUsernameByBoardId, id)
+	var username sql.NullString
+	err := row.Scan(&username)
+	return username, err
+}
+
 const linkGame = `-- name: LinkGame :exec
 
 UPDATE boards
-SET game_id = $2
+SET game_id = $2, updated_at = NOW()
 WHERE id = $1
 `
 
@@ -53,5 +146,23 @@ type LinkGameParams struct {
 
 func (q *Queries) LinkGame(ctx context.Context, arg LinkGameParams) error {
 	_, err := q.db.ExecContext(ctx, linkGame, arg.ID, arg.GameID)
+	return err
+}
+
+const updateBoard = `-- name: UpdateBoard :exec
+
+UPDATE boards
+SET board = $2, score = $3, updated_at = NOW()
+WHERE id = $1
+`
+
+type UpdateBoardParams struct {
+	ID    uuid.UUID
+	Board [][]int32
+	Score sql.NullInt32
+}
+
+func (q *Queries) UpdateBoard(ctx context.Context, arg UpdateBoardParams) error {
+	_, err := q.db.ExecContext(ctx, updateBoard, arg.ID, pq.Array(arg.Board), arg.Score)
 	return err
 }

@@ -42,9 +42,29 @@ func (q *Queries) CreateNewGame(ctx context.Context, arg CreateNewGameParams) (G
 	return i, err
 }
 
+const getGameById = `-- name: GetGameById :one
+
+SELECT id, created_at, updated_at, board1, board2, winner FROM games
+WHERE id = $1
+`
+
+func (q *Queries) GetGameById(ctx context.Context, id uuid.UUID) (Game, error) {
+	row := q.db.QueryRowContext(ctx, getGameById, id)
+	var i Game
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Board1,
+		&i.Board2,
+		&i.Winner,
+	)
+	return i, err
+}
+
 const setGameWinner = `-- name: SetGameWinner :exec
 UPDATE games
-SET winner = $2
+SET winner = $2, updated_at = NOW()
 WHERE id = $1
 `
 
@@ -55,5 +75,17 @@ type SetGameWinnerParams struct {
 
 func (q *Queries) SetGameWinner(ctx context.Context, arg SetGameWinnerParams) error {
 	_, err := q.db.ExecContext(ctx, setGameWinner, arg.ID, arg.Winner)
+	return err
+}
+
+const updateGame = `-- name: UpdateGame :exec
+
+UPDATE games
+SET updated_at = NOW()
+WHERE id = $1
+`
+
+func (q *Queries) UpdateGame(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, updateGame, id)
 	return err
 }
