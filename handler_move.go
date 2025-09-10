@@ -15,6 +15,7 @@ type UpdatedBoard struct {
 	Id 		uuid.UUID 	`json:"id"`
 	Board 	[][]int32 	`json:"board"`
 	Score 	int32		`json:"score"`
+	IsFull 	bool 		`json:"is_full"`
 }
 
 func (cfg *apiConfig) handlerMakeMove(w http.ResponseWriter, r *http.Request) {
@@ -92,6 +93,26 @@ func (cfg *apiConfig) handlerMakeMove(w http.ResponseWriter, r *http.Request) {
 
 	updatedOppBoard := updateOpp(oppBoard.Board, move.Dice, move.Col)
 
+	if isFull(updatedPlayerBoard) {
+		if calcScore(updatedPlayerBoard) > calcScore(updatedOppBoard) {
+			cfg.db.SetGameWinner(r.Context(), database.SetGameWinnerParams{
+				ID: 	currentGame.ID,
+				Winner: uuid.NullUUID{
+					Valid: true,
+					UUID:  playerBoard.PlayerID,
+				},
+			})
+		} else {
+			cfg.db.SetGameWinner(r.Context(), database.SetGameWinnerParams{
+				ID: 	currentGame.ID,
+				Winner: uuid.NullUUID{
+					Valid: true,
+					UUID:  oppBoard.PlayerID,
+				},
+			})
+		}
+	}
+
 	if err = cfg.db.UpdateBoard(r.Context(), database.UpdateBoardParams{
 		ID: playerBoard.ID,
 		Board: updatedPlayerBoard,
@@ -115,16 +136,20 @@ func (cfg *apiConfig) handlerMakeMove(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	cfg.gs.broadcastToGame(currentGame.ID)
+
 	respondWithJSON(w, http.StatusOK, []UpdatedBoard{
 		{
 			Id: 	playerBoard.ID,
-			Board:  playerBoard.Board,
-			Score:  playerBoard.Score.Int32,
+			Board:  updatedPlayerBoard,
+			Score:  calcScore(updatedPlayerBoard),
+			IsFull: isFull(updatedPlayerBoard),
 		},
 		{
 			Id: 	oppBoard.ID,
-			Board:  oppBoard.Board,
-			Score:  oppBoard.Score.Int32,
+			Board:  updatedOppBoard,
+			Score:  calcScore(updatedOppBoard),
+			IsFull: isFull(updatedOppBoard),
 		},
 	})
 }
@@ -184,3 +209,13 @@ func updateOpp(board [][]int32, dice, col int) ([][]int32) {
 	return board
 }
 
+func isFull(board [][]int32) bool {
+	for row := range 3 {
+		for col := range 3 {
+			if board[row][col] == 0 {
+				return false
+			}
+		}
+	}
+	return true
+}

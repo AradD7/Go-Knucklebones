@@ -6,16 +6,24 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"sync"
 
 	"github.com/AradD7/Go-Knuclebones/internal/database"
+	"github.com/gorilla/websocket"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
+
+type gameServer struct {
+	connections map[string][]*websocket.Conn
+	rwMux 		*sync.RWMutex
+}
 
 type apiConfig struct {
 	db 			*database.Queries
 	tokenSecret	string
 	platform 	string
+	gs  *gameServer
 }
 
 func main() {
@@ -52,6 +60,8 @@ func main() {
 	mux.HandleFunc("GET /api/games/{game_id}", apiCfg.handlerGetGame)
 	mux.HandleFunc("POST /api/games/new", apiCfg.handlerNewGame)
 	mux.HandleFunc("PUT /api/games/{game_id}", apiCfg.handlerMakeMove)
+
+	mux.HandleFunc("/ws/games/{game_id}", apiCfg.handleWebSocket)
 
 	srv := &http.Server{
 		Handler: mux,
