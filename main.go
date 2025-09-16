@@ -61,7 +61,9 @@ func main() {
 	mux.HandleFunc("POST /api/games/new", apiCfg.handlerNewGame)
 	mux.HandleFunc("PUT /api/games/{game_id}", apiCfg.handlerMakeMove)
 
-	mux.HandleFunc("/ws/games/{game_id}", apiCfg.handleWebSocket)
+	mux.HandleFunc("/ws/games/{game_id}", apiCfg.handlerWebSocket)
+
+	mux.HandleFunc("POST /api/games/localgame", apiCfg.handlerLocalGame)
 
 	srv := &http.Server{
 		Handler: mux,
