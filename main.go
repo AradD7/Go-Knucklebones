@@ -14,6 +14,24 @@ import (
 	_ "github.com/lib/pq"
 )
 
+func corsMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Set CORS headers
+		w.Header().Set("Access-Control-Allow-Origin", "http://localhost:5173") // React dev server
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
+		// Handle preflight OPTIONS request
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		// Continue to the next handler
+		next.ServeHTTP(w, r)
+	})
+}
+
 type gameServer struct {
 	connections map[string][]*websocket.Conn
 	rwMux 		*sync.RWMutex
@@ -66,10 +84,10 @@ func main() {
 	mux.HandleFunc("POST /api/games/localgame", apiCfg.handlerLocalGame)
 
 	srv := &http.Server{
-		Handler: mux,
+		Handler: corsMiddleware(mux),
 		Addr: 	 ":" + port,
 	}
 
-	fmt.Printf("Seving files from %s on port:%s\n", filepathRoot, port)
+	fmt.Printf("Api available on port:%s\n", port)
 	srv.ListenAndServe()
 }
