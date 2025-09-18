@@ -25,3 +25,9 @@ UPDATE games
 SET updated_at = NOW()
 WHERE id = $1;
 --
+
+-- name: JoinGame :exec
+UPDATE games
+SET board2 = $2
+WHERE id = $1;
+--

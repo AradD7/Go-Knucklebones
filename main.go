@@ -76,12 +76,14 @@ func main() {
 
 	mux.HandleFunc("GET /api/games", apiCfg.handlerGetGames)
 	mux.HandleFunc("GET /api/games/{game_id}", apiCfg.handlerGetGame)
-	mux.HandleFunc("POST /api/games/new", apiCfg.handlerNewGame)
+	mux.HandleFunc("GET /api/games/new", apiCfg.handlerNewGame)
+	mux.HandleFunc("GET /api/games/join/{game_id}", apiCfg.handlerJoinGame)
 	mux.HandleFunc("PUT /api/games/{game_id}", apiCfg.handlerMakeMove)
 
 	mux.HandleFunc("/ws/games/{game_id}", apiCfg.handlerWebSocket)
 
 	mux.HandleFunc("POST /api/games/localgame", apiCfg.handlerLocalGame)
+
 
 	srv := &http.Server{
 		Handler: corsMiddleware(mux),

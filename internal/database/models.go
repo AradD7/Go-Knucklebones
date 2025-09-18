@@ -26,7 +26,7 @@ type Game struct {
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	Board1    uuid.UUID
-	Board2    uuid.UUID
+	Board2    uuid.NullUUID
 	Winner    uuid.NullUUID
 }
 

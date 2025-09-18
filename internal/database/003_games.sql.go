@@ -25,7 +25,7 @@ RETURNING id, created_at, updated_at, board1, board2, winner
 
 type CreateNewGameParams struct {
 	Board1 uuid.UUID
-	Board2 uuid.UUID
+	Board2 uuid.NullUUID
 }
 
 func (q *Queries) CreateNewGame(ctx context.Context, arg CreateNewGameParams) (Game, error) {
@@ -60,6 +60,23 @@ func (q *Queries) GetGameById(ctx context.Context, id uuid.UUID) (Game, error) {
 		&i.Winner,
 	)
 	return i, err
+}
+
+const joinGame = `-- name: JoinGame :exec
+
+UPDATE games
+SET board2 = $2
+WHERE id = $1
+`
+
+type JoinGameParams struct {
+	ID     uuid.UUID
+	Board2 uuid.NullUUID
+}
+
+func (q *Queries) JoinGame(ctx context.Context, arg JoinGameParams) error {
+	_, err := q.db.ExecContext(ctx, joinGame, arg.ID, arg.Board2)
+	return err
 }
 
 const setGameWinner = `-- name: SetGameWinner :exec
