@@ -69,7 +69,7 @@ func main() {
 
 	mux.HandleFunc("POST /admin/reset", apiCfg.handlerReset)
 
-	mux.HandleFunc("POST /api/players", apiCfg.handlerNewPlayer)
+	mux.HandleFunc("POST /api/players/new", apiCfg.handlerNewPlayer)
 	mux.HandleFunc("POST /api/players/login", apiCfg.handlerPlayerLogin)
 
 	mux.HandleFunc("GET /api/rolls", handlerRoll)

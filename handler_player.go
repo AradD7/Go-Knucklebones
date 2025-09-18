@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"time"
 
@@ -51,6 +52,11 @@ func (cfg *apiConfig) handlerNewPlayer(w http.ResponseWriter, r *http.Request) {
 		CreatedAt: 	player.CreatedAt,
 		Username: 	player.Username,
 	})
+	log.Println("Successfully made:", Player{
+		Id: 		player.ID,
+		CreatedAt: 	player.CreatedAt,
+		Username: 	player.Username,
+	})
 }
 
 func (cfg *apiConfig) handlerPlayerLogin(w http.ResponseWriter, r *http.Request) {
@@ -77,10 +83,14 @@ func (cfg *apiConfig) handlerPlayerLogin(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	refreshToken, err := cfg.db.CreateRefreshToken(r.Context(), database.CreateRefreshTokenParams{
-		Token: 		auth.MakeRefreshToken(),
-		PlayerID: 	player.ID,
-	})
+	refreshToken, err := cfg.db.GetRefreshTokenFromPlayerId(r.Context(), player.ID)
+	if err != nil {
+		refreshToken, err = cfg.db.CreateRefreshToken(r.Context(), database.CreateRefreshTokenParams{
+			Token: 		auth.MakeRefreshToken(),
+			PlayerID: 	player.ID,
+		})
+	}
+
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Failed to create new refresh token", err)
 		return
