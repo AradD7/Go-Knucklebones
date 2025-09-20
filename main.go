@@ -76,6 +76,9 @@ func main() {
 	mux.HandleFunc("POST /api/players/new", apiCfg.handlerNewPlayer)
 	mux.HandleFunc("POST /api/players/login", apiCfg.handlerPlayerLogin)
 
+	mux.HandleFunc("GET /api/tokens/refresh", apiCfg.handlerRefresh)
+	mux.HandleFunc("GET /api/tokens/revoke", apiCfg.handlerRevoke)
+
 	mux.HandleFunc("GET /api/rolls", handlerRoll)
 
 	mux.HandleFunc("GET /api/games", apiCfg.handlerGetGames)

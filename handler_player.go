@@ -84,7 +84,9 @@ func (cfg *apiConfig) handlerPlayerLogin(w http.ResponseWriter, r *http.Request)
 	}
 
 	refreshToken, err := cfg.db.GetRefreshTokenFromPlayerId(r.Context(), player.ID)
-	if err != nil {
+	if err != nil || time.Now().After(refreshToken.ExpiresAt) || refreshToken.RevokedAt.Valid  {
+		cfg.db.DeleteRefreshToken(r.Context(), refreshToken.Token)
+
 		refreshToken, err = cfg.db.CreateRefreshToken(r.Context(), database.CreateRefreshTokenParams{
 			Token: 		auth.MakeRefreshToken(),
 			PlayerID: 	player.ID,

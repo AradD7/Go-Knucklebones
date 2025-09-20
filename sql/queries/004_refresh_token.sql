@@ -25,3 +25,8 @@ WHERE token = $1;
 SELECT * FROM refresh_tokens
 WHERE player_id = $1 AND (revoked_at != NULL OR expires_at >= NOW());
 --
+
+-- name: DeleteRefreshToken :exec
+DELETE FROM refresh_tokens
+WHERE token = $1;
+--
