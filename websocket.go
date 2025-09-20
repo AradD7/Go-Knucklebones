@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+	"log"
 	"net/http"
 	"slices"
 
@@ -13,6 +15,11 @@ var (
 	wsUpgrader = websocket.Upgrader{
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
+		CheckOrigin: func(r *http.Request) bool {
+			// Allow connections from your React dev server
+			origin := r.Header.Get("Origin")
+			return origin == "http://localhost:5173"
+		},
 	}
 )
 
@@ -33,18 +40,22 @@ func (cfg apiConfig) handlerWebSocket(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer conn.Close()
+	fmt.Println("WebSocket upgraded successfully")
 
 	var msg PlayerMessage
 	if err := conn.ReadJSON(&msg); err != nil {
+		log.Println(msg)
 		return
 	}
 
+	log.Println(msg)
 	_, err = auth.ValidateJWT(msg.Token, cfg.tokenSecret)
 	if err != nil {
 		return
 	}
 
 	cfg.gs.addConnection(gameId, conn)
+   fmt.Println("Connection added successfully")
 
 	for {
 		_, _, err := conn.ReadMessage()
@@ -56,6 +67,7 @@ func (cfg apiConfig) handlerWebSocket(w http.ResponseWriter, r *http.Request) {
 }
 
 func (gs *gameServer) addConnection(id string, conn *websocket.Conn) {
+
 	gs.rwMux.Lock()
 	gs.connections[id] = append(gs.connections[id], conn)
 	gs.rwMux.Unlock()
@@ -74,10 +86,18 @@ func (gs *gameServer) removeConnection(id string, conn *websocket.Conn) {
 
 func (gs *gameServer) broadcastToGame(gameId uuid.UUID) {
 	gs.rwMux.RLock()
-	for _, conn := range gs.connections[gameId.String()] {
-		conn.WriteJSON(PlayerMessage{
+	connections := gs.connections[gameId.String()]
+	fmt.Printf("Found %d connections for game\n", len(connections))
+	for i, conn := range gs.connections[gameId.String()] {
+		fmt.Printf("Sending message to connection %d\n", i)
+		err := conn.WriteJSON(PlayerMessage{
 			Type: "refresh",
 		})
+		if err != nil {
+			fmt.Printf("ERROR sending to connection %d: %v\n", i, err)
+		} else {
+			fmt.Printf("SUCCESS: Message sent to connection %d\n", i)
+		}
 	}
 	gs.rwMux.RUnlock()
 }

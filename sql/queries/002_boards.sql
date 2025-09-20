@@ -4,7 +4,7 @@ VALUES (
     gen_random_uuid(),
     NOW(),
     NOW(),
-    ARRAY[]::INTEGER[][],
+    '[[0, 0, 0], [0, 0, 0], [0, 0, 0]]',
     $1
 )
 RETURNING *;

@@ -8,9 +8,9 @@ package database
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 
 	"github.com/google/uuid"
-	"github.com/lib/pq"
 )
 
 const createBoard = `-- name: CreateBoard :one
@@ -19,7 +19,7 @@ VALUES (
     gen_random_uuid(),
     NOW(),
     NOW(),
-    ARRAY[]::INTEGER[][],
+    '[[0, 0, 0], [0, 0, 0], [0, 0, 0]]',
     $1
 )
 RETURNING id, created_at, updated_at, board, player_id, game_id, score
@@ -32,7 +32,7 @@ func (q *Queries) CreateBoard(ctx context.Context, playerID uuid.UUID) (Board, e
 		&i.ID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
-		pq.Array(&i.Board),
+		&i.Board,
 		&i.PlayerID,
 		&i.GameID,
 		&i.Score,
@@ -53,7 +53,7 @@ func (q *Queries) GetBoardById(ctx context.Context, id uuid.UUID) (Board, error)
 		&i.ID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
-		pq.Array(&i.Board),
+		&i.Board,
 		&i.PlayerID,
 		&i.GameID,
 		&i.Score,
@@ -79,7 +79,7 @@ func (q *Queries) GetBoardByPlayerIdAndGameId(ctx context.Context, arg GetBoardB
 		&i.ID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
-		pq.Array(&i.Board),
+		&i.Board,
 		&i.PlayerID,
 		&i.GameID,
 		&i.Score,
@@ -158,11 +158,11 @@ WHERE id = $1
 
 type UpdateBoardParams struct {
 	ID    uuid.UUID
-	Board [][]int32
+	Board json.RawMessage
 	Score sql.NullInt32
 }
 
 func (q *Queries) UpdateBoard(ctx context.Context, arg UpdateBoardParams) error {
-	_, err := q.db.ExecContext(ctx, updateBoard, arg.ID, pq.Array(arg.Board), arg.Score)
+	_, err := q.db.ExecContext(ctx, updateBoard, arg.ID, arg.Board, arg.Score)
 	return err
 }

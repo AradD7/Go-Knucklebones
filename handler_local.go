@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-type gameState struct {
+type GameState struct {
 	Board1 	[][]int32 	`json:"board1"`
 	Board2 	[][]int32 	`json:"board2"`
 	Score1 	int			`json:"score1"`
@@ -32,7 +32,7 @@ func (cfg *apiConfig) handlerLocalGame(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var updatedGameState gameState
+	var updatedGameState GameState
 	switch params.Turn {
 	case "player1":
 		updatedBoard1, err := putDice(params.Board1, params.Dice, params.Row, params.Col)

@@ -61,6 +61,10 @@ func main() {
 		db: 		 database.New(db),
 		tokenSecret: secret,
 		platform: 	 os.Getenv("PLATFORM"),
+		gs: 		 &gameServer{
+			connections: make(map[string][]*websocket.Conn),
+			rwMux: 		 &sync.RWMutex{},
+		},
 	}
 
 	mux := http.NewServeMux()
@@ -77,8 +81,8 @@ func main() {
 	mux.HandleFunc("GET /api/games", apiCfg.handlerGetGames)
 	mux.HandleFunc("GET /api/games/{game_id}", apiCfg.handlerGetGame)
 	mux.HandleFunc("GET /api/games/new", apiCfg.handlerNewGame)
-	mux.HandleFunc("GET /api/games/join/{game_id}", apiCfg.handlerJoinGame)
-	mux.HandleFunc("PUT /api/games/{game_id}", apiCfg.handlerMakeMove)
+	mux.HandleFunc("GET /api/games/{game_id}/join", apiCfg.handlerJoinGame)
+	mux.HandleFunc("POST /api/games/move/{game_id}", apiCfg.handlerMakeMove)
 
 	mux.HandleFunc("/ws/games/{game_id}", apiCfg.handlerWebSocket)
 

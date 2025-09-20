@@ -11,13 +11,6 @@ import (
 	"github.com/google/uuid"
 )
 
-type UpdatedBoard struct {
-	Id 		uuid.UUID 	`json:"id"`
-	Board 	[][]int32 	`json:"board"`
-	Score 	int32		`json:"score"`
-	IsFull 	bool 		`json:"is_full"`
-}
-
 func (cfg *apiConfig) handlerMakeMove(w http.ResponseWriter, r *http.Request) {
 	gameId, err := uuid.Parse(r.PathValue("game_id"))
 	if err != nil {
@@ -70,28 +63,32 @@ func (cfg *apiConfig) handlerMakeMove(w http.ResponseWriter, r *http.Request) {
 
 	oppBoardId := currentGame.Board1
 	if oppBoardId == playerBoard.ID {
-		oppBoardId = currentGame.Board2
+		oppBoardId = currentGame.Board2.UUID
 	}
 
-	oppBoard, err := cfg.db.GetBoardByPlayerIdAndGameId(r.Context(), database.GetBoardByPlayerIdAndGameIdParams{
-		PlayerID: 	oppBoardId,
-		GameID: 	uuid.NullUUID{
-			Valid: 	true,
-			UUID: 	gameId,
-		},
-	})
+	oppBoard, err := cfg.db.GetBoardById(r.Context(), oppBoardId)
 	if err != nil {
 		respondWithError(w, http.StatusNotFound, "Opponent not found", err)
 		return
 	}
 
-	updatedPlayerBoard, err := putDice(playerBoard.Board, move.Dice, move.Row, move.Col)
+	var playerBoardData, oppBoardData [][]int32
+	if err = json.Unmarshal(playerBoard.Board, &playerBoardData); err != nil {
+		respondWithError(w, http.StatusInternalServerError, "couldn't turn the board into [][]int32", err)
+		return
+	}
+	if err = json.Unmarshal(oppBoard.Board, &oppBoardData); err != nil {
+		respondWithError(w, http.StatusInternalServerError, "couldn't turn the board into [][]int32", err)
+		return
+	}
+
+	updatedPlayerBoard, err := putDice(playerBoardData, move.Dice, move.Row, move.Col)
 	if err != nil {
 		respondWithError(w, http.StatusBadRequest, "Can't put there!", err)
 		return
 	}
 
-	updatedOppBoard := updateOpp(oppBoard.Board, move.Dice, move.Col)
+	updatedOppBoard := updateOpp(oppBoardData, move.Dice, move.Col)
 
 	if isFull(updatedPlayerBoard) {
 		if calcScore(updatedPlayerBoard) > calcScore(updatedOppBoard) {
@@ -113,9 +110,20 @@ func (cfg *apiConfig) handlerMakeMove(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	updatedPlayerBoardJSON, err := json.Marshal(updatedPlayerBoard)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "couldn't turn the board into json data", err)
+		return
+	}
+	updatedOppBoardJSON, err := json.Marshal(updatedOppBoard)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "couldn't turn the board into json data", err)
+		return
+	}
+
 	if err = cfg.db.UpdateBoard(r.Context(), database.UpdateBoardParams{
 		ID: playerBoard.ID,
-		Board: updatedPlayerBoard,
+		Board: updatedPlayerBoardJSON,
 		Score: sql.NullInt32{
 			Valid: true,
 			Int32: calcScore(updatedPlayerBoard),
@@ -126,7 +134,7 @@ func (cfg *apiConfig) handlerMakeMove(w http.ResponseWriter, r *http.Request) {
 	}
 	if err = cfg.db.UpdateBoard(r.Context(), database.UpdateBoardParams{
 		ID: oppBoardId,
-		Board: updatedOppBoard,
+		Board: updatedOppBoardJSON,
 		Score: sql.NullInt32{
 			Valid: true,
 			Int32: calcScore(updatedOppBoard),
@@ -138,19 +146,12 @@ func (cfg *apiConfig) handlerMakeMove(w http.ResponseWriter, r *http.Request) {
 
 	cfg.gs.broadcastToGame(currentGame.ID)
 
-	respondWithJSON(w, http.StatusOK, []UpdatedBoard{
-		{
-			Id: 	playerBoard.ID,
-			Board:  updatedPlayerBoard,
-			Score:  calcScore(updatedPlayerBoard),
-			IsFull: isFull(updatedPlayerBoard),
-		},
-		{
-			Id: 	oppBoard.ID,
-			Board:  updatedOppBoard,
-			Score:  calcScore(updatedOppBoard),
-			IsFull: isFull(updatedOppBoard),
-		},
+	respondWithJSON(w, http.StatusOK, GameState{
+		Board1: updatedPlayerBoard,
+		Board2: updatedOppBoard,
+		Score1: int(playerBoard.Score.Int32),
+		Score2: int(oppBoard.Score.Int32),
+		IsOver: isFull(updatedPlayerBoard) || isFull(updatedOppBoard),
 	})
 }
 

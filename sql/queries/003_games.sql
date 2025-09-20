@@ -31,3 +31,4 @@ UPDATE games
 SET board2 = $2
 WHERE id = $1;
 --
+

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"net/http"
 	"time"
 
@@ -14,6 +15,8 @@ type Game struct{
 	CreatedAt	time.Time `json:"created_at"`
 	Board1 		[][]int32 `json:"board1"`
 	Board2		[][]int32 `json:"board2"`
+	Score1 		int		  `json:"score1"`
+	Score2 		int		  `json:"score2"`
 }
 
 type GameIds struct {
@@ -65,10 +68,16 @@ func (cfg *apiConfig) handlerNewGame(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var player1BoardData [][]int32
+	if err = json.Unmarshal(player1Board.Board, &player1BoardData); err != nil {
+		respondWithError(w, http.StatusInternalServerError, "couldn't turn the board into [][]int32", err)
+		return
+	}
+
 	respondWithJSON(w, http.StatusCreated, Game{
 		Id: 		newGame.ID,
 		CreatedAt: 	newGame.CreatedAt,
-		Board1: 	player1Board.Board,
+		Board1: 	player1BoardData,
 		Board2: 	nil,
 	})
 }
@@ -131,9 +140,19 @@ func (cfg *apiConfig) handlerGetGame(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	board2, err := cfg.db.GetBoardById(r.Context(), game.Board2)
+	board2, err := cfg.db.GetBoardById(r.Context(), game.Board2.UUID)
 	if err != nil {
 		respondWithError(w, http.StatusNotFound, "Failed to get board 2 of the game", err)
+		return
+	}
+
+	var board1Data, board2Data [][]int32
+	if err = json.Unmarshal(board1.Board, &board1Data); err != nil {
+		respondWithError(w, http.StatusInternalServerError, "couldn't turn the board into [][]int32", err)
+		return
+	}
+	if err = json.Unmarshal(board2.Board, &board2Data); err != nil {
+		respondWithError(w, http.StatusInternalServerError, "couldn't turn the board into [][]int32", err)
 		return
 	}
 
@@ -141,8 +160,10 @@ func (cfg *apiConfig) handlerGetGame(w http.ResponseWriter, r *http.Request) {
 		respondWithJSON(w, http.StatusOK, Game{
 			Id: 		game.ID,
 			CreatedAt: 	game.CreatedAt,
-			Board1:  	board1.Board,
-			Board2: 	board2.Board,
+			Board1:  	board1Data,
+			Board2: 	board2Data,
+			Score1: 	int(board1.Score.Int32),
+			Score2: 	int(board2.Score.Int32),
 		})
 		return
 	}
@@ -151,13 +172,14 @@ func (cfg *apiConfig) handlerGetGame(w http.ResponseWriter, r *http.Request) {
 		respondWithJSON(w, http.StatusOK, Game{
 			Id: 		game.ID,
 			CreatedAt: 	game.CreatedAt,
-			Board1:  	board2.Board,
-			Board2: 	board1.Board,
+			Board1:  	board2Data,
+			Board2: 	board1Data,
+			Score1: 	int(board1.Score.Int32),
+			Score2: 	int(board2.Score.Int32),
 		})
 		return
 	}
 	respondWithError(w, http.StatusUnauthorized, "Player is not in this game", err)
-	return
 }
 
 func (cfg *apiConfig) handlerJoinGame(w http.ResponseWriter, r *http.Request) {
@@ -213,17 +235,28 @@ func (cfg *apiConfig) handlerJoinGame(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+
 	oppBoard, err := cfg.db.GetBoardById(r.Context(), currentGame.Board1)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Falied to get opponent board", err)
 		return
 	}
 
+	var playerBoardData, oppBoardData [][]int32
+	if err = json.Unmarshal(playerBoard.Board, &playerBoardData); err != nil {
+		respondWithError(w, http.StatusInternalServerError, "couldn't turn the board into [][]int32", err)
+		return
+	}
+	if err = json.Unmarshal(oppBoard.Board, &oppBoardData); err != nil {
+		respondWithError(w, http.StatusInternalServerError, "couldn't turn the board into [][]int32", err)
+		return
+	}
+
 	respondWithJSON(w, http.StatusCreated, Game{
 		Id: 		gameId,
 		CreatedAt: 	currentGame.CreatedAt,
-		Board1: 	playerBoard.Board,
-		Board2: 	oppBoard.Board,
+		Board1: 	playerBoardData,
+		Board2: 	oppBoardData,
 	})
 
 	cfg.gs.broadcastToGame(gameId)

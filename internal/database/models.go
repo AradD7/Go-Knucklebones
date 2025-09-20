@@ -6,6 +6,7 @@ package database
 
 import (
 	"database/sql"
+	"encoding/json"
 	"time"
 
 	"github.com/google/uuid"
@@ -15,7 +16,7 @@ type Board struct {
 	ID        uuid.UUID
 	CreatedAt time.Time
 	UpdatedAt time.Time
-	Board     [][]int32
+	Board     json.RawMessage
 	PlayerID  uuid.UUID
 	GameID    uuid.NullUUID
 	Score     sql.NullInt32
