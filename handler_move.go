@@ -90,7 +90,9 @@ func (cfg *apiConfig) handlerMakeMove(w http.ResponseWriter, r *http.Request) {
 
 	updatedOppBoard := updateOpp(oppBoardData, move.Dice, move.Col)
 
+	isGameOver := false
 	if isFull(updatedPlayerBoard) {
+		isGameOver = true
 		if calcScore(updatedPlayerBoard) > calcScore(updatedOppBoard) {
 			cfg.db.SetGameWinner(r.Context(), database.SetGameWinnerParams{
 				ID: 	currentGame.ID,
@@ -162,7 +164,7 @@ func (cfg *apiConfig) handlerMakeMove(w http.ResponseWriter, r *http.Request) {
 		Board2: updatedOppBoard,
 		Score1: int(playerBoard.Score.Int32),
 		Score2: int(oppBoard.Score.Int32),
-		IsOver: isFull(updatedPlayerBoard) || isFull(updatedOppBoard),
+		IsOver: isGameOver,
 	})
 }
 

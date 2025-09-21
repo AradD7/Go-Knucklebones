@@ -20,6 +20,7 @@ type Game struct{
 	Score1 		int		  `json:"score1"`
 	Score2 		int		  `json:"score2"`
 	IsTurn 		bool 	  `json:"is_turn"`
+	IsOver 		bool 	  `json:"is_over"`
 }
 
 type GameIds struct {
@@ -169,6 +170,7 @@ func (cfg *apiConfig) handlerGetGame(w http.ResponseWriter, r *http.Request) {
 			Score1: 	int(board1.Score.Int32),
 			Score2: 	int(board2.Score.Int32),
 			IsTurn:  	game.PlayerTurn.UUID == playerId,
+			IsOver: 	game.Winner.Valid,
 		})
 		return
 	}
@@ -182,6 +184,7 @@ func (cfg *apiConfig) handlerGetGame(w http.ResponseWriter, r *http.Request) {
 			Score1: 	int(board2.Score.Int32),
 			Score2: 	int(board1.Score.Int32),
 			IsTurn:  	game.PlayerTurn.UUID == playerId,
+			IsOver: 	game.Winner.Valid,
 		})
 		return
 	}
