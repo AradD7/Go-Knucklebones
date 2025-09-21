@@ -20,7 +20,7 @@ VALUES (
     $1,
     $2
 )
-RETURNING id, created_at, updated_at, board1, board2, winner
+RETURNING id, created_at, updated_at, board1, board2, winner, player_turn
 `
 
 type CreateNewGameParams struct {
@@ -38,13 +38,14 @@ func (q *Queries) CreateNewGame(ctx context.Context, arg CreateNewGameParams) (G
 		&i.Board1,
 		&i.Board2,
 		&i.Winner,
+		&i.PlayerTurn,
 	)
 	return i, err
 }
 
 const getGameById = `-- name: GetGameById :one
 
-SELECT id, created_at, updated_at, board1, board2, winner FROM games
+SELECT id, created_at, updated_at, board1, board2, winner, player_turn FROM games
 WHERE id = $1
 `
 
@@ -58,6 +59,7 @@ func (q *Queries) GetGameById(ctx context.Context, id uuid.UUID) (Game, error) {
 		&i.Board1,
 		&i.Board2,
 		&i.Winner,
+		&i.PlayerTurn,
 	)
 	return i, err
 }
@@ -92,6 +94,23 @@ type SetGameWinnerParams struct {
 
 func (q *Queries) SetGameWinner(ctx context.Context, arg SetGameWinnerParams) error {
 	_, err := q.db.ExecContext(ctx, setGameWinner, arg.ID, arg.Winner)
+	return err
+}
+
+const setPlayerTurn = `-- name: SetPlayerTurn :exec
+
+UPDATE games
+SET player_turn = $2
+WHERE id = $1
+`
+
+type SetPlayerTurnParams struct {
+	ID         uuid.UUID
+	PlayerTurn uuid.NullUUID
+}
+
+func (q *Queries) SetPlayerTurn(ctx context.Context, arg SetPlayerTurnParams) error {
+	_, err := q.db.ExecContext(ctx, setPlayerTurn, arg.ID, arg.PlayerTurn)
 	return err
 }
 

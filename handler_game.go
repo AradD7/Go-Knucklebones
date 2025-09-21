@@ -2,6 +2,8 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
+	"math/rand"
 	"net/http"
 	"time"
 
@@ -17,6 +19,7 @@ type Game struct{
 	Board2		[][]int32 `json:"board2"`
 	Score1 		int		  `json:"score1"`
 	Score2 		int		  `json:"score2"`
+	IsTurn 		bool 	  `json:"is_turn"`
 }
 
 type GameIds struct {
@@ -156,6 +159,7 @@ func (cfg *apiConfig) handlerGetGame(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	fmt.Printf("playerid: %v\nturnid: %v", playerId, game.PlayerTurn)
 	if board1.PlayerID == playerId {
 		respondWithJSON(w, http.StatusOK, Game{
 			Id: 		game.ID,
@@ -164,6 +168,7 @@ func (cfg *apiConfig) handlerGetGame(w http.ResponseWriter, r *http.Request) {
 			Board2: 	board2Data,
 			Score1: 	int(board1.Score.Int32),
 			Score2: 	int(board2.Score.Int32),
+			IsTurn:  	game.PlayerTurn.UUID == playerId,
 		})
 		return
 	}
@@ -174,8 +179,9 @@ func (cfg *apiConfig) handlerGetGame(w http.ResponseWriter, r *http.Request) {
 			CreatedAt: 	game.CreatedAt,
 			Board1:  	board2Data,
 			Board2: 	board1Data,
-			Score1: 	int(board1.Score.Int32),
-			Score2: 	int(board2.Score.Int32),
+			Score1: 	int(board2.Score.Int32),
+			Score2: 	int(board1.Score.Int32),
+			IsTurn:  	game.PlayerTurn.UUID == playerId,
 		})
 		return
 	}
@@ -252,11 +258,29 @@ func (cfg *apiConfig) handlerJoinGame(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var playerTurnId uuid.UUID
+	if rand.Intn(2) == 0 {
+		playerTurnId = oppBoard.PlayerID
+	} else {
+		playerTurnId = playerId
+	}
+	if err = cfg.db.SetPlayerTurn(r.Context(), database.SetPlayerTurnParams{
+		ID: 		gameId,
+		PlayerTurn: uuid.NullUUID{
+			Valid: 	true,
+			UUID: 	playerTurnId,
+		},
+	}); err != nil {
+		respondWithError(w, http.StatusInternalServerError, "failed to assign turn", err)
+		return
+	}
+
 	respondWithJSON(w, http.StatusCreated, Game{
 		Id: 		gameId,
 		CreatedAt: 	currentGame.CreatedAt,
 		Board1: 	playerBoardData,
 		Board2: 	oppBoardData,
+		IsTurn:  	playerId == playerTurnId,
 	})
 
 	cfg.gs.broadcastToGame(gameId)

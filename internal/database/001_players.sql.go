@@ -7,6 +7,8 @@ package database
 
 import (
 	"context"
+	"database/sql"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -58,6 +60,48 @@ func (q *Queries) GetPlayerByPlayerId(ctx context.Context, id uuid.UUID) (Player
 		&i.Username,
 		&i.Avatar,
 		&i.HashedPassword,
+	)
+	return i, err
+}
+
+const getPlayerByRefreshToken = `-- name: GetPlayerByRefreshToken :one
+
+SELECT id, players.created_at, players.updated_at, username, avatar, hashed_password, token, refresh_tokens.created_at, refresh_tokens.updated_at, player_id, expires_at, revoked_at FROM players
+LEFT JOIN refresh_tokens ON players.id = refresh_tokens.player_id
+WHERE refresh_tokens.token = $1
+`
+
+type GetPlayerByRefreshTokenRow struct {
+	ID             uuid.UUID
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+	Username       string
+	Avatar         sql.NullString
+	HashedPassword string
+	Token          sql.NullString
+	CreatedAt_2    sql.NullTime
+	UpdatedAt_2    sql.NullTime
+	PlayerID       uuid.NullUUID
+	ExpiresAt      sql.NullTime
+	RevokedAt      sql.NullTime
+}
+
+func (q *Queries) GetPlayerByRefreshToken(ctx context.Context, token string) (GetPlayerByRefreshTokenRow, error) {
+	row := q.db.QueryRowContext(ctx, getPlayerByRefreshToken, token)
+	var i GetPlayerByRefreshTokenRow
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Username,
+		&i.Avatar,
+		&i.HashedPassword,
+		&i.Token,
+		&i.CreatedAt_2,
+		&i.UpdatedAt_2,
+		&i.PlayerID,
+		&i.ExpiresAt,
+		&i.RevokedAt,
 	)
 	return i, err
 }

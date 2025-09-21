@@ -23,12 +23,13 @@ type Board struct {
 }
 
 type Game struct {
-	ID        uuid.UUID
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	Board1    uuid.UUID
-	Board2    uuid.NullUUID
-	Winner    uuid.NullUUID
+	ID         uuid.UUID
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
+	Board1     uuid.UUID
+	Board2     uuid.NullUUID
+	Winner     uuid.NullUUID
+	PlayerTurn uuid.NullUUID
 }
 
 type Player struct {

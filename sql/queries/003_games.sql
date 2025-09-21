@@ -32,3 +32,8 @@ SET board2 = $2
 WHERE id = $1;
 --
 
+-- name: SetPlayerTurn :exec
+UPDATE games
+SET player_turn = $2
+WHERE id = $1;
+--

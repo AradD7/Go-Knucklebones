@@ -19,3 +19,9 @@ WHERE username = $1;
 SELECT * FROM players
 WHERE id = $1;
 --
+
+-- name: GetPlayerByRefreshToken :one
+SELECT * FROM players
+LEFT JOIN refresh_tokens ON players.id = refresh_tokens.player_id
+WHERE refresh_tokens.token = $1;
+--

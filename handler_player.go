@@ -17,6 +17,7 @@ type Player struct {
 	Username 	 string	   	`json:"username"`
 	RefreshToken string 	`json:"refresh_token"`
 	Token 		 string 	`json:"token"`
+	Avatar 		 string 	`json:"avatar"`
 }
 
 func (cfg *apiConfig) handlerNewPlayer(w http.ResponseWriter, r *http.Request) {
@@ -110,5 +111,31 @@ func (cfg *apiConfig) handlerPlayerLogin(w http.ResponseWriter, r *http.Request)
 		Username: 	  player.Username,
 		RefreshToken: refreshToken.Token,
 		Token: 		  token,
+	})
+}
+
+func (cfg *apiConfig) handlerGetPlayer(w http.ResponseWriter, r *http.Request) {
+	token, err := auth.GetBearerToken(r.Header)
+	if err != nil {
+		respondWithError(w, http.StatusNotFound, "Not Authorized", err)
+		return
+	}
+
+	playerId, err := auth.ValidateJWT(token, cfg.tokenSecret)
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "Token is exipred, refresh JWT token or login again", err)
+		return
+	}
+
+	player, err := cfg.db.GetPlayerByPlayerId(r.Context(), playerId)
+	if err != nil {
+		respondWithError(w, http.StatusNotFound, "Player not found", err)
+		return
+	}
+
+	respondWithJSON(w, http.StatusOK, Player{
+		Id: 		player.ID,
+		Username: 	player.Username,
+		Avatar: 	player.Avatar.String,
 	})
 }

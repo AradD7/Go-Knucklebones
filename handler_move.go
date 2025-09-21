@@ -144,6 +144,17 @@ func (cfg *apiConfig) handlerMakeMove(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if err = cfg.db.SetPlayerTurn(r.Context(), database.SetPlayerTurnParams{
+		ID: 		currentGame.ID,
+		PlayerTurn: uuid.NullUUID{
+			Valid: 	true,
+			UUID: 	oppBoard.PlayerID,
+		},
+	}); err != nil {
+		respondWithError(w, http.StatusInternalServerError, "failed to assign turn", err)
+		return
+	}
+
 	cfg.gs.broadcastToGame(currentGame.ID)
 
 	respondWithJSON(w, http.StatusOK, GameState{
