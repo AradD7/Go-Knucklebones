@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 	"time"
 
@@ -49,11 +48,6 @@ func (cfg *apiConfig) handlerNewPlayer(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respondWithJSON(w, http.StatusCreated, Player{
-		Id: 		player.ID,
-		CreatedAt: 	player.CreatedAt,
-		Username: 	player.Username,
-	})
-	log.Println("Successfully made:", Player{
 		Id: 		player.ID,
 		CreatedAt: 	player.CreatedAt,
 		Username: 	player.Username,

@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 )
 
@@ -15,7 +14,6 @@ type GameState struct {
 }
 
 func (cfg *apiConfig) handlerLocalGame(w http.ResponseWriter, r *http.Request) {
-	log.Println("Request recieved!")
 	type parameters struct {
 		Board1 	[][]int32 	`json:"board1"`
 		Board2 	[][]int32 	`json:"board2"`

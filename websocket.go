@@ -40,7 +40,6 @@ func (cfg apiConfig) handlerWebSocket(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer conn.Close()
-	fmt.Println("WebSocket upgraded successfully")
 
 	var msg PlayerMessage
 	if err := conn.ReadJSON(&msg); err != nil {
@@ -55,7 +54,6 @@ func (cfg apiConfig) handlerWebSocket(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cfg.gs.addConnection(gameId, conn)
-   fmt.Println("Connection added successfully")
 
 	for {
 		_, _, err := conn.ReadMessage()
@@ -86,10 +84,7 @@ func (gs *gameServer) removeConnection(id string, conn *websocket.Conn) {
 
 func (gs *gameServer) broadcastToGame(gameId uuid.UUID) {
 	gs.rwMux.RLock()
-	connections := gs.connections[gameId.String()]
-	fmt.Printf("Found %d connections for game\n", len(connections))
 	for i, conn := range gs.connections[gameId.String()] {
-		fmt.Printf("Sending message to connection %d\n", i)
 		err := conn.WriteJSON(PlayerMessage{
 			Type: "refresh",
 		})

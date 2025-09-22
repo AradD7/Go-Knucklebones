@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"math/rand"
 	"net/http"
 	"time"
@@ -160,7 +159,6 @@ func (cfg *apiConfig) handlerGetGame(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Printf("playerid: %v\nturnid: %v", playerId, game.PlayerTurn)
 	if board1.PlayerID == playerId {
 		respondWithJSON(w, http.StatusOK, Game{
 			Id: 		game.ID,
