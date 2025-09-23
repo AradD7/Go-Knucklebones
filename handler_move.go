@@ -184,7 +184,8 @@ func calcScore(board [][]int32) int32 {
 	return int32(score)
 }
 
-func putDice(board [][]int32, dice, row, col int) ([][]int32, error) {
+func putDice(originalBoard [][]int32, dice, row, col int) ([][]int32, error) {
+	board := deepCopy2D(originalBoard)
 	if row < 0 || row > 3 || col < 0 || col > 3 {
 		return board, fmt.Errorf("There are 3 rows and 3 columns (ie 3 > row, col > 0)")
 	}
@@ -201,7 +202,8 @@ func putDice(board [][]int32, dice, row, col int) ([][]int32, error) {
 	return board, nil
 }
 
-func updateOpp(board [][]int32, dice, col int) ([][]int32) {
+func updateOpp(originalBoard [][]int32, dice, col int) ([][]int32) {
+	board := deepCopy2D(originalBoard)
 	for row := range 3 {
 		if board[row][col] == int32(dice) {
 			board[row][col] = 0
