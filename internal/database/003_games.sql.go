@@ -67,7 +67,7 @@ func (q *Queries) GetGameById(ctx context.Context, id uuid.UUID) (Game, error) {
 const joinGame = `-- name: JoinGame :exec
 
 UPDATE games
-SET board2 = $2
+SET board2 = $2, updated_at = NOW()
 WHERE id = $1
 `
 
@@ -100,7 +100,7 @@ func (q *Queries) SetGameWinner(ctx context.Context, arg SetGameWinnerParams) er
 const setPlayerTurn = `-- name: SetPlayerTurn :exec
 
 UPDATE games
-SET player_turn = $2
+SET player_turn = $2, updated_at = NOW()
 WHERE id = $1
 `
 

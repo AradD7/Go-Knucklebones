@@ -22,7 +22,7 @@ VALUES (
     $1,
     $2
 )
-RETURNING id, created_at, updated_at, username, avatar, hashed_password
+RETURNING id, created_at, updated_at, username, avatar, hashed_password, display_name
 `
 
 type CreatePlayerParams struct {
@@ -40,13 +40,14 @@ func (q *Queries) CreatePlayer(ctx context.Context, arg CreatePlayerParams) (Pla
 		&i.Username,
 		&i.Avatar,
 		&i.HashedPassword,
+		&i.DisplayName,
 	)
 	return i, err
 }
 
 const getPlayerByPlayerId = `-- name: GetPlayerByPlayerId :one
 
-SELECT id, created_at, updated_at, username, avatar, hashed_password FROM players
+SELECT id, created_at, updated_at, username, avatar, hashed_password, display_name FROM players
 WHERE id = $1
 `
 
@@ -60,13 +61,14 @@ func (q *Queries) GetPlayerByPlayerId(ctx context.Context, id uuid.UUID) (Player
 		&i.Username,
 		&i.Avatar,
 		&i.HashedPassword,
+		&i.DisplayName,
 	)
 	return i, err
 }
 
 const getPlayerByRefreshToken = `-- name: GetPlayerByRefreshToken :one
 
-SELECT id, players.created_at, players.updated_at, username, avatar, hashed_password, token, refresh_tokens.created_at, refresh_tokens.updated_at, player_id, expires_at, revoked_at FROM players
+SELECT id, players.created_at, players.updated_at, username, avatar, hashed_password, display_name, token, refresh_tokens.created_at, refresh_tokens.updated_at, player_id, expires_at, revoked_at FROM players
 LEFT JOIN refresh_tokens ON players.id = refresh_tokens.player_id
 WHERE refresh_tokens.token = $1
 `
@@ -78,6 +80,7 @@ type GetPlayerByRefreshTokenRow struct {
 	Username       string
 	Avatar         sql.NullString
 	HashedPassword string
+	DisplayName    sql.NullString
 	Token          sql.NullString
 	CreatedAt_2    sql.NullTime
 	UpdatedAt_2    sql.NullTime
@@ -96,6 +99,7 @@ func (q *Queries) GetPlayerByRefreshToken(ctx context.Context, token string) (Ge
 		&i.Username,
 		&i.Avatar,
 		&i.HashedPassword,
+		&i.DisplayName,
 		&i.Token,
 		&i.CreatedAt_2,
 		&i.UpdatedAt_2,
@@ -108,7 +112,7 @@ func (q *Queries) GetPlayerByRefreshToken(ctx context.Context, token string) (Ge
 
 const getPlayerByUsername = `-- name: GetPlayerByUsername :one
 
-SELECT id, created_at, updated_at, username, avatar, hashed_password FROM players
+SELECT id, created_at, updated_at, username, avatar, hashed_password, display_name FROM players
 WHERE username = $1
 `
 
@@ -122,6 +126,25 @@ func (q *Queries) GetPlayerByUsername(ctx context.Context, username string) (Pla
 		&i.Username,
 		&i.Avatar,
 		&i.HashedPassword,
+		&i.DisplayName,
 	)
 	return i, err
+}
+
+const updateProfile = `-- name: UpdateProfile :exec
+
+UPDATE players
+SET display_name = $2, avatar = $3, updated_at = NOW()
+WHERE id = $1
+`
+
+type UpdateProfileParams struct {
+	ID          uuid.UUID
+	DisplayName sql.NullString
+	Avatar      sql.NullString
+}
+
+func (q *Queries) UpdateProfile(ctx context.Context, arg UpdateProfileParams) error {
+	_, err := q.db.ExecContext(ctx, updateProfile, arg.ID, arg.DisplayName, arg.Avatar)
+	return err
 }

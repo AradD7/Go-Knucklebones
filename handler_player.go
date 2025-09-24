@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"net/http"
 	"time"
@@ -17,6 +18,7 @@ type Player struct {
 	RefreshToken string 	`json:"refresh_token"`
 	Token 		 string 	`json:"token"`
 	Avatar 		 string 	`json:"avatar"`
+	DisplayName  string 	`json:"display_name"`
 }
 
 func (cfg *apiConfig) handlerNewPlayer(w http.ResponseWriter, r *http.Request) {
@@ -105,6 +107,8 @@ func (cfg *apiConfig) handlerPlayerLogin(w http.ResponseWriter, r *http.Request)
 		Username: 	  player.Username,
 		RefreshToken: refreshToken.Token,
 		Token: 		  token,
+		Avatar: 	  player.Avatar.String,
+		DisplayName:  player.DisplayName.String,
 	})
 }
 
@@ -132,4 +136,47 @@ func (cfg *apiConfig) handlerGetPlayer(w http.ResponseWriter, r *http.Request) {
 		Username: 	player.Username,
 		Avatar: 	player.Avatar.String,
 	})
+}
+
+func (cfg *apiConfig) handlerUpdateProfile(w http.ResponseWriter, r *http.Request) {
+	token, err := auth.GetBearerToken(r.Header)
+	if err != nil {
+		respondWithError(w, http.StatusNotFound, "Not Authorized", err)
+		return
+	}
+
+	playerId, err := auth.ValidateJWT(token, cfg.tokenSecret)
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "Token is exipred, refresh JWT token or login again", err)
+		return
+	}
+
+	type paramaters struct {
+		DisplayName string `json:"display_name"`
+		Avatar 		string `json:"avatar"`
+	}
+
+	decoder := json.NewDecoder(r.Body)
+	var params paramaters
+	if err := decoder.Decode(&params); err != nil {
+		respondWithError(w, http.StatusBadRequest, "Failed to decode the json data", err)
+		return
+	}
+
+	if err = cfg.db.UpdateProfile(r.Context(), database.UpdateProfileParams{
+		ID: 		 playerId,
+		Avatar: 	 sql.NullString{
+			Valid:  true,
+			String: params.Avatar,
+		},
+		DisplayName: sql.NullString{
+			Valid: 	true,
+			String: params.DisplayName,
+		},
+	}); err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Failed to update profile", err)
+		return
+	}
+
+	respondWithJSON(w, http.StatusOK, nil)
 }

@@ -39,6 +39,7 @@ type Player struct {
 	Username       string
 	Avatar         sql.NullString
 	HashedPassword string
+	DisplayName    sql.NullString
 }
 
 type RefreshToken struct {

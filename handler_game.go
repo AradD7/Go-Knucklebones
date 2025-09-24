@@ -20,6 +20,8 @@ type Game struct{
 	Score2 		int		  `json:"score2"`
 	IsTurn 		bool 	  `json:"is_turn"`
 	IsOver 		bool 	  `json:"is_over"`
+	OppName 	string 	  `json:"opp_name"`
+	OppAvatar  	string 	  `json:"opp_avatar"`
 }
 
 type GameIds struct {
@@ -276,13 +278,36 @@ func (cfg *apiConfig) handlerJoinGame(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	opp, err := cfg.db.GetPlayerByPlayerId(r.Context(), oppBoard.PlayerID)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "failed to get player info to broadcast", err)
+		return
+	}
+
+	oppDisplayName := opp.Username
+	if opp.DisplayName.Valid {
+		oppDisplayName = opp.DisplayName.String
+	}
+
 	respondWithJSON(w, http.StatusCreated, Game{
 		Id: 		gameId,
 		CreatedAt: 	currentGame.CreatedAt,
 		Board1: 	playerBoardData,
 		Board2: 	oppBoardData,
 		IsTurn:  	playerId == playerTurnId,
+		OppName: 	oppDisplayName,
+		OppAvatar: 	opp.Avatar.String,
 	})
 
-	cfg.gs.broadcastToGame(gameId)
+	player, err := cfg.db.GetPlayerByPlayerId(r.Context(), playerId)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "failed to get player info to broadcast", err)
+		return
+	}
+
+	if player.DisplayName.Valid {
+		cfg.gs.broadcastJoined(gameId, player.DisplayName.String, player.Avatar.String)
+	} else {
+		cfg.gs.broadcastJoined(gameId, player.Username, player.Avatar.String)
+	}
 }

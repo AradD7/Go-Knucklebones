@@ -24,8 +24,10 @@ var (
 )
 
 type PlayerMessage struct {
-	Type 	string `json:"type"`
-	Token 	string `json:"token"`
+	Type 		string `json:"type"`
+	Token 		string `json:"token"`
+	DisplayName string `json:"display_name"`
+	Avatar 		string `json:"avatar"`
 }
 
 func (cfg apiConfig) handlerWebSocket(w http.ResponseWriter, r *http.Request) {
@@ -87,6 +89,24 @@ func (gs *gameServer) broadcastToGame(gameId uuid.UUID) {
 	for i, conn := range gs.connections[gameId.String()] {
 		err := conn.WriteJSON(PlayerMessage{
 			Type: "refresh",
+		})
+		if err != nil {
+			fmt.Printf("ERROR sending to connection %d: %v\n", i, err)
+		} else {
+			fmt.Printf("SUCCESS: Message sent to connection %d\n", i)
+		}
+	}
+	gs.rwMux.RUnlock()
+}
+
+func (gs *gameServer) broadcastJoined(gameId uuid.UUID, displayName, avatar string) {
+	gs.rwMux.RLock()
+	for i, conn := range gs.connections[gameId.String()] {
+		err := conn.WriteJSON(PlayerMessage{
+			Type: 		 "joined",
+			DisplayName: displayName,
+			Avatar: 	 avatar,
+
 		})
 		if err != nil {
 			fmt.Printf("ERROR sending to connection %d: %v\n", i, err)
