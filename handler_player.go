@@ -132,9 +132,10 @@ func (cfg *apiConfig) handlerGetPlayer(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respondWithJSON(w, http.StatusOK, Player{
-		Id: 		player.ID,
-		Username: 	player.Username,
-		Avatar: 	player.Avatar.String,
+		Id: 		 player.ID,
+		Username: 	 player.Username,
+		Avatar: 	 player.Avatar.String,
+		DisplayName: player.DisplayName.String,
 	})
 }
 
@@ -165,13 +166,13 @@ func (cfg *apiConfig) handlerUpdateProfile(w http.ResponseWriter, r *http.Reques
 
 	if err = cfg.db.UpdateProfile(r.Context(), database.UpdateProfileParams{
 		ID: 		 playerId,
-		Avatar: 	 sql.NullString{
-			Valid:  true,
-			String: params.Avatar,
-		},
 		DisplayName: sql.NullString{
-			Valid: 	true,
+			Valid: 	params.DisplayName != "",
 			String: params.DisplayName,
+		},
+		Avatar: 	 sql.NullString{
+			Valid:  params.Avatar != "",
+			String: params.Avatar,
 		},
 	}); err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Failed to update profile", err)
