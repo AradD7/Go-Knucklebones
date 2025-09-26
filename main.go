@@ -80,6 +80,7 @@ func main() {
 
 	mux.HandleFunc("GET /api/tokens/refresh", apiCfg.handlerRefresh)
 	mux.HandleFunc("GET /api/tokens/revoke", apiCfg.handlerRevoke)
+	mux.HandleFunc("POST /api/auth/google", apiCfg.handlerAuthGoogle)
 
 	mux.HandleFunc("GET /api/rolls", handlerRoll)
 
