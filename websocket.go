@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"slices"
 
 	"github.com/AradD7/Go-Knuclebones/internal/auth"
@@ -18,8 +19,7 @@ var (
 		CheckOrigin: func(r *http.Request) bool {
 			// Allow connections from your React dev server
 			origin := r.Header.Get("Origin")
-			return origin == "http://localhost:5173"
-		},
+			return origin == os.Getenv("FRONTEND_URL")		},
 	}
 )
 
@@ -45,7 +45,6 @@ func (cfg apiConfig) handlerWebSocket(w http.ResponseWriter, r *http.Request) {
 
 	var msg PlayerMessage
 	if err := conn.ReadJSON(&msg); err != nil {
-		log.Println(msg)
 		return
 	}
 
