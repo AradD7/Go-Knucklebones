@@ -22,12 +22,12 @@ VALUES (
     $1,
     $2
 )
-RETURNING id, created_at, updated_at, username, avatar, hashed_password, display_name
+RETURNING id, created_at, updated_at, username, avatar, hashed_password, display_name, google_id, email
 `
 
 type CreatePlayerParams struct {
 	Username       string
-	HashedPassword string
+	HashedPassword sql.NullString
 }
 
 func (q *Queries) CreatePlayer(ctx context.Context, arg CreatePlayerParams) (Player, error) {
@@ -41,13 +41,82 @@ func (q *Queries) CreatePlayer(ctx context.Context, arg CreatePlayerParams) (Pla
 		&i.Avatar,
 		&i.HashedPassword,
 		&i.DisplayName,
+		&i.GoogleID,
+		&i.Email,
+	)
+	return i, err
+}
+
+const createPlayerWithGoogle = `-- name: CreatePlayerWithGoogle :one
+
+INSERT INTO players (id, created_at, updated_at, username, google_id, email, display_name)
+VALUES (
+    gen_random_uuid(),
+    NOW(),
+    NOW(),
+    $1,
+    $2,
+    $3,
+    $4
+)
+RETURNING id, created_at, updated_at, username, avatar, hashed_password, display_name, google_id, email
+`
+
+type CreatePlayerWithGoogleParams struct {
+	Username    string
+	GoogleID    sql.NullString
+	Email       sql.NullString
+	DisplayName sql.NullString
+}
+
+func (q *Queries) CreatePlayerWithGoogle(ctx context.Context, arg CreatePlayerWithGoogleParams) (Player, error) {
+	row := q.db.QueryRowContext(ctx, createPlayerWithGoogle,
+		arg.Username,
+		arg.GoogleID,
+		arg.Email,
+		arg.DisplayName,
+	)
+	var i Player
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Username,
+		&i.Avatar,
+		&i.HashedPassword,
+		&i.DisplayName,
+		&i.GoogleID,
+		&i.Email,
+	)
+	return i, err
+}
+
+const getPlayerByGoogleId = `-- name: GetPlayerByGoogleId :one
+
+SELECT id, created_at, updated_at, username, avatar, hashed_password, display_name, google_id, email FROM players
+WHERE google_id = $1
+`
+
+func (q *Queries) GetPlayerByGoogleId(ctx context.Context, googleID sql.NullString) (Player, error) {
+	row := q.db.QueryRowContext(ctx, getPlayerByGoogleId, googleID)
+	var i Player
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Username,
+		&i.Avatar,
+		&i.HashedPassword,
+		&i.DisplayName,
+		&i.GoogleID,
+		&i.Email,
 	)
 	return i, err
 }
 
 const getPlayerByPlayerId = `-- name: GetPlayerByPlayerId :one
 
-SELECT id, created_at, updated_at, username, avatar, hashed_password, display_name FROM players
+SELECT id, created_at, updated_at, username, avatar, hashed_password, display_name, google_id, email FROM players
 WHERE id = $1
 `
 
@@ -62,13 +131,15 @@ func (q *Queries) GetPlayerByPlayerId(ctx context.Context, id uuid.UUID) (Player
 		&i.Avatar,
 		&i.HashedPassword,
 		&i.DisplayName,
+		&i.GoogleID,
+		&i.Email,
 	)
 	return i, err
 }
 
 const getPlayerByRefreshToken = `-- name: GetPlayerByRefreshToken :one
 
-SELECT id, players.created_at, players.updated_at, username, avatar, hashed_password, display_name, token, refresh_tokens.created_at, refresh_tokens.updated_at, player_id, expires_at, revoked_at FROM players
+SELECT id, players.created_at, players.updated_at, username, avatar, hashed_password, display_name, google_id, email, token, refresh_tokens.created_at, refresh_tokens.updated_at, player_id, expires_at, revoked_at FROM players
 LEFT JOIN refresh_tokens ON players.id = refresh_tokens.player_id
 WHERE refresh_tokens.token = $1
 `
@@ -79,8 +150,10 @@ type GetPlayerByRefreshTokenRow struct {
 	UpdatedAt      time.Time
 	Username       string
 	Avatar         sql.NullString
-	HashedPassword string
+	HashedPassword sql.NullString
 	DisplayName    sql.NullString
+	GoogleID       sql.NullString
+	Email          sql.NullString
 	Token          sql.NullString
 	CreatedAt_2    sql.NullTime
 	UpdatedAt_2    sql.NullTime
@@ -100,6 +173,8 @@ func (q *Queries) GetPlayerByRefreshToken(ctx context.Context, token string) (Ge
 		&i.Avatar,
 		&i.HashedPassword,
 		&i.DisplayName,
+		&i.GoogleID,
+		&i.Email,
 		&i.Token,
 		&i.CreatedAt_2,
 		&i.UpdatedAt_2,
@@ -112,7 +187,7 @@ func (q *Queries) GetPlayerByRefreshToken(ctx context.Context, token string) (Ge
 
 const getPlayerByUsername = `-- name: GetPlayerByUsername :one
 
-SELECT id, created_at, updated_at, username, avatar, hashed_password, display_name FROM players
+SELECT id, created_at, updated_at, username, avatar, hashed_password, display_name, google_id, email FROM players
 WHERE username = $1
 `
 
@@ -127,6 +202,8 @@ func (q *Queries) GetPlayerByUsername(ctx context.Context, username string) (Pla
 		&i.Avatar,
 		&i.HashedPassword,
 		&i.DisplayName,
+		&i.GoogleID,
+		&i.Email,
 	)
 	return i, err
 }

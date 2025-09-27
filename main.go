@@ -38,16 +38,18 @@ type gameServer struct {
 }
 
 type apiConfig struct {
-	db 			*database.Queries
-	tokenSecret	string
-	platform 	string
-	gs  *gameServer
+	db 				*database.Queries
+	tokenSecret		string
+	googleClientId 	string
+	platform 		string
+	gs  			*gameServer
 }
 
 func main() {
 	godotenv.Load()
 
 	secret 				:= os.Getenv("TOKEN_SECERT")
+	clientId 			:= os.Getenv("GOOGLE_CLIENT_ID")
 	const port 			= "8080"
 	const filepathRoot 	= "."
 	dbURL 				:= os.Getenv("DB_URL")
@@ -58,10 +60,11 @@ func main() {
 	}
 
 	apiCfg := apiConfig{
-		db: 		 database.New(db),
-		tokenSecret: secret,
-		platform: 	 os.Getenv("PLATFORM"),
-		gs: 		 &gameServer{
+		db: 		 	database.New(db),
+		tokenSecret: 	secret,
+		googleClientId: clientId,
+		platform: 	 	os.Getenv("PLATFORM"),
+		gs: 		 	&gameServer{
 			connections: make(map[string][]*websocket.Conn),
 			rwMux: 		 &sync.RWMutex{},
 		},

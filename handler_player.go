@@ -42,7 +42,10 @@ func (cfg *apiConfig) handlerNewPlayer(w http.ResponseWriter, r *http.Request) {
 
 	player, err := cfg.db.CreatePlayer(r.Context(), database.CreatePlayerParams{
 		Username: 		newPlayer.Username,
-		HashedPassword: hashPassword,
+		HashedPassword: sql.NullString{
+			Valid:  true,
+			String: hashPassword,
+		},
 	})
 	if err != nil {
 		respondWithError(w, http.StatusBadRequest, "Failed to add the player to DB", err)
@@ -75,7 +78,7 @@ func (cfg *apiConfig) handlerPlayerLogin(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	if err = auth.CompareHashPassword(player.HashedPassword, newPlayer.Password); err != nil {
+	if err = auth.CompareHashPassword(player.HashedPassword.String, newPlayer.Password); err != nil {
 		respondWithError(w, http.StatusBadRequest, "Wrong username or Password", err)
 		return
 	}

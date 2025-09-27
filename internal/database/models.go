@@ -38,8 +38,10 @@ type Player struct {
 	UpdatedAt      time.Time
 	Username       string
 	Avatar         sql.NullString
-	HashedPassword string
+	HashedPassword sql.NullString
 	DisplayName    sql.NullString
+	GoogleID       sql.NullString
+	Email          sql.NullString
 }
 
 type RefreshToken struct {
