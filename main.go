@@ -74,6 +74,8 @@ func main() {
 
 	mux.Handle("/app/", http.StripPrefix("/app", http.FileServer(http.Dir(filepathRoot))))
 
+	mux.HandleFunc("GET /health", apiCfg.handlerHealthCheck)
+
 	mux.HandleFunc("POST /admin/reset", apiCfg.handlerReset)
 
 	mux.HandleFunc("POST /api/players/new", apiCfg.handlerNewPlayer)
@@ -84,8 +86,6 @@ func main() {
 	mux.HandleFunc("GET /api/tokens/refresh", apiCfg.handlerRefresh)
 	mux.HandleFunc("GET /api/tokens/revoke", apiCfg.handlerRevoke)
 	mux.HandleFunc("POST /api/auth/google", apiCfg.handlerAuthGoogle)
-
-	mux.HandleFunc("GET /api/rolls", handlerRoll)
 
 	mux.HandleFunc("GET /api/games", apiCfg.handlerGetGames)
 	mux.HandleFunc("GET /api/games/{game_id}", apiCfg.handlerGetGame)
