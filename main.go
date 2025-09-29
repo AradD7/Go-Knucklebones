@@ -74,7 +74,7 @@ func main() {
 
 	mux.Handle("/app/", http.StripPrefix("/app", http.FileServer(http.Dir(filepathRoot))))
 
-	mux.HandleFunc("GET /health", apiCfg.handlerHealthCheck)
+	mux.HandleFunc("GET /api/health", apiCfg.handlerHealthCheck)
 
 	mux.HandleFunc("POST /admin/reset", apiCfg.handlerReset)
 
