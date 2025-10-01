@@ -14,24 +14,26 @@ import (
 )
 
 const createPlayer = `-- name: CreatePlayer :one
-INSERT INTO players (id, created_at, updated_at, username, hashed_password)
+INSERT INTO players (id, created_at, updated_at, username, email, hashed_password)
 VALUES (
     gen_random_uuid(),
     NOW(),
     NOW(),
     $1,
-    $2
+    $2,
+    $3
 )
-RETURNING id, created_at, updated_at, username, avatar, hashed_password, display_name, google_id, email
+RETURNING id, created_at, updated_at, username, avatar, hashed_password, display_name, google_id, email, email_verified
 `
 
 type CreatePlayerParams struct {
 	Username       string
+	Email          sql.NullString
 	HashedPassword sql.NullString
 }
 
 func (q *Queries) CreatePlayer(ctx context.Context, arg CreatePlayerParams) (Player, error) {
-	row := q.db.QueryRowContext(ctx, createPlayer, arg.Username, arg.HashedPassword)
+	row := q.db.QueryRowContext(ctx, createPlayer, arg.Username, arg.Email, arg.HashedPassword)
 	var i Player
 	err := row.Scan(
 		&i.ID,
@@ -43,13 +45,14 @@ func (q *Queries) CreatePlayer(ctx context.Context, arg CreatePlayerParams) (Pla
 		&i.DisplayName,
 		&i.GoogleID,
 		&i.Email,
+		&i.EmailVerified,
 	)
 	return i, err
 }
 
 const createPlayerWithGoogle = `-- name: CreatePlayerWithGoogle :one
 
-INSERT INTO players (id, created_at, updated_at, username, google_id, email, display_name)
+INSERT INTO players (id, created_at, updated_at, username, google_id, email, display_name, email_verified)
 VALUES (
     gen_random_uuid(),
     NOW(),
@@ -57,9 +60,10 @@ VALUES (
     $1,
     $2,
     $3,
-    $4
+    $4,
+    TRUE
 )
-RETURNING id, created_at, updated_at, username, avatar, hashed_password, display_name, google_id, email
+RETURNING id, created_at, updated_at, username, avatar, hashed_password, display_name, google_id, email, email_verified
 `
 
 type CreatePlayerWithGoogleParams struct {
@@ -87,13 +91,38 @@ func (q *Queries) CreatePlayerWithGoogle(ctx context.Context, arg CreatePlayerWi
 		&i.DisplayName,
 		&i.GoogleID,
 		&i.Email,
+		&i.EmailVerified,
+	)
+	return i, err
+}
+
+const getPlayerByEmail = `-- name: GetPlayerByEmail :one
+
+SELECT id, created_at, updated_at, username, avatar, hashed_password, display_name, google_id, email, email_verified FROM players
+WHERE email = $1
+`
+
+func (q *Queries) GetPlayerByEmail(ctx context.Context, email sql.NullString) (Player, error) {
+	row := q.db.QueryRowContext(ctx, getPlayerByEmail, email)
+	var i Player
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Username,
+		&i.Avatar,
+		&i.HashedPassword,
+		&i.DisplayName,
+		&i.GoogleID,
+		&i.Email,
+		&i.EmailVerified,
 	)
 	return i, err
 }
 
 const getPlayerByGoogleId = `-- name: GetPlayerByGoogleId :one
 
-SELECT id, created_at, updated_at, username, avatar, hashed_password, display_name, google_id, email FROM players
+SELECT id, created_at, updated_at, username, avatar, hashed_password, display_name, google_id, email, email_verified FROM players
 WHERE google_id = $1
 `
 
@@ -110,13 +139,14 @@ func (q *Queries) GetPlayerByGoogleId(ctx context.Context, googleID sql.NullStri
 		&i.DisplayName,
 		&i.GoogleID,
 		&i.Email,
+		&i.EmailVerified,
 	)
 	return i, err
 }
 
 const getPlayerByPlayerId = `-- name: GetPlayerByPlayerId :one
 
-SELECT id, created_at, updated_at, username, avatar, hashed_password, display_name, google_id, email FROM players
+SELECT id, created_at, updated_at, username, avatar, hashed_password, display_name, google_id, email, email_verified FROM players
 WHERE id = $1
 `
 
@@ -133,13 +163,14 @@ func (q *Queries) GetPlayerByPlayerId(ctx context.Context, id uuid.UUID) (Player
 		&i.DisplayName,
 		&i.GoogleID,
 		&i.Email,
+		&i.EmailVerified,
 	)
 	return i, err
 }
 
 const getPlayerByRefreshToken = `-- name: GetPlayerByRefreshToken :one
 
-SELECT id, players.created_at, players.updated_at, username, avatar, hashed_password, display_name, google_id, email, token, refresh_tokens.created_at, refresh_tokens.updated_at, player_id, expires_at, revoked_at FROM players
+SELECT id, players.created_at, players.updated_at, username, avatar, hashed_password, display_name, google_id, email, email_verified, token, refresh_tokens.created_at, refresh_tokens.updated_at, player_id, expires_at, revoked_at FROM players
 LEFT JOIN refresh_tokens ON players.id = refresh_tokens.player_id
 WHERE refresh_tokens.token = $1
 `
@@ -154,6 +185,7 @@ type GetPlayerByRefreshTokenRow struct {
 	DisplayName    sql.NullString
 	GoogleID       sql.NullString
 	Email          sql.NullString
+	EmailVerified  sql.NullBool
 	Token          sql.NullString
 	CreatedAt_2    sql.NullTime
 	UpdatedAt_2    sql.NullTime
@@ -175,6 +207,7 @@ func (q *Queries) GetPlayerByRefreshToken(ctx context.Context, token string) (Ge
 		&i.DisplayName,
 		&i.GoogleID,
 		&i.Email,
+		&i.EmailVerified,
 		&i.Token,
 		&i.CreatedAt_2,
 		&i.UpdatedAt_2,
@@ -187,7 +220,7 @@ func (q *Queries) GetPlayerByRefreshToken(ctx context.Context, token string) (Ge
 
 const getPlayerByUsername = `-- name: GetPlayerByUsername :one
 
-SELECT id, created_at, updated_at, username, avatar, hashed_password, display_name, google_id, email FROM players
+SELECT id, created_at, updated_at, username, avatar, hashed_password, display_name, google_id, email, email_verified FROM players
 WHERE username = $1
 `
 
@@ -204,6 +237,7 @@ func (q *Queries) GetPlayerByUsername(ctx context.Context, username string) (Pla
 		&i.DisplayName,
 		&i.GoogleID,
 		&i.Email,
+		&i.EmailVerified,
 	)
 	return i, err
 }
@@ -223,5 +257,17 @@ type UpdateProfileParams struct {
 
 func (q *Queries) UpdateProfile(ctx context.Context, arg UpdateProfileParams) error {
 	_, err := q.db.ExecContext(ctx, updateProfile, arg.ID, arg.DisplayName, arg.Avatar)
+	return err
+}
+
+const verifyPlayerEmail = `-- name: VerifyPlayerEmail :exec
+
+UPDATE players
+SET email_verified = true, updated_at = NOW()
+WHERE id = $1
+`
+
+func (q *Queries) VerifyPlayerEmail(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, verifyPlayerEmail, id)
 	return err
 }

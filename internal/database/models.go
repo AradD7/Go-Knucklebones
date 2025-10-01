@@ -42,6 +42,7 @@ type Player struct {
 	DisplayName    sql.NullString
 	GoogleID       sql.NullString
 	Email          sql.NullString
+	EmailVerified  sql.NullBool
 }
 
 type RefreshToken struct {
@@ -51,4 +52,11 @@ type RefreshToken struct {
 	PlayerID  uuid.UUID
 	ExpiresAt time.Time
 	RevokedAt sql.NullTime
+}
+
+type VerificationToken struct {
+	TokenHash string
+	PlayerID  uuid.UUID
+	ExpiresAt time.Time
+	CreatedAt time.Time
 }

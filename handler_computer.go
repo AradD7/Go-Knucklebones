@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"math/rand"
 	"net/http"
 	"sort"
@@ -90,10 +89,7 @@ func computerMove(board1, board2 [][]int32, difficulty string, dice int) ([][]in
 		} else {
 			continue
 		}
-		updatedBoard1, err := putDice(computerBoard, dice, row, col)
-		if err != nil {
-			fmt.Println(err)
-		}
+		updatedBoard1, _ := putDice(computerBoard, dice, row, col)
 		updatedBoard2 := updateOpp(playerBoard, dice, col)
 		scenarios = append(scenarios, scenario{
 			board1: 	updatedBoard1,

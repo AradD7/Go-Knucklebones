@@ -37,3 +37,11 @@ UPDATE games
 SET player_turn = $2, updated_at = NOW()
 WHERE id = $1;
 --
+
+-- name: DeleteEmptyBoardsForPlayer :exec
+DELETE FROM games
+USING boards
+WHERE games.board1 = boards.id
+  AND boards.player_id = $1
+  AND games.board2 IS NULL;
+--

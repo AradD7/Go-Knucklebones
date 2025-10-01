@@ -1,11 +1,12 @@
 -- name: CreatePlayer :one
-INSERT INTO players (id, created_at, updated_at, username, hashed_password)
+INSERT INTO players (id, created_at, updated_at, username, email, hashed_password)
 VALUES (
     gen_random_uuid(),
     NOW(),
     NOW(),
     $1,
-    $2
+    $2,
+    $3
 )
 RETURNING *;
 --
@@ -33,7 +34,7 @@ WHERE id = $1;
 --
 
 -- name: CreatePlayerWithGoogle :one
-INSERT INTO players (id, created_at, updated_at, username, google_id, email, display_name)
+INSERT INTO players (id, created_at, updated_at, username, google_id, email, display_name, email_verified)
 VALUES (
     gen_random_uuid(),
     NOW(),
@@ -41,7 +42,8 @@ VALUES (
     $1,
     $2,
     $3,
-    $4
+    $4,
+    TRUE
 )
 RETURNING *;
 --
@@ -49,4 +51,15 @@ RETURNING *;
 -- name: GetPlayerByGoogleId :one
 SELECT * FROM players
 WHERE google_id = $1;
+--
+
+-- name: VerifyPlayerEmail :exec
+UPDATE players
+SET email_verified = true, updated_at = NOW()
+WHERE id = $1;
+--
+
+-- name: GetPlayerByEmail :one
+SELECT * FROM players
+WHERE email = $1;
 --

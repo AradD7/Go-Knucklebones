@@ -8,22 +8,26 @@ import (
 
 	"github.com/AradD7/Go-Knuclebones/internal/auth"
 	"github.com/AradD7/Go-Knuclebones/internal/database"
+	"github.com/AradD7/Go-Knuclebones/internal/verification"
 	"github.com/google/uuid"
 )
 
 type Player struct {
-	Id 			 uuid.UUID 	`json:"id"`
-	CreatedAt	 time.Time 	`json:"created_at"`
-	Username 	 string	   	`json:"username"`
-	RefreshToken string 	`json:"refresh_token"`
-	Token 		 string 	`json:"token"`
-	Avatar 		 string 	`json:"avatar"`
-	DisplayName  string 	`json:"display_name"`
+	Id 			  uuid.UUID	`json:"id"`
+	CreatedAt	  time.Time `json:"created_at"`
+	Username 	  string  	`json:"username"`
+	RefreshToken  string 	`json:"refresh_token"`
+	Token 		  string 	`json:"token"`
+	Avatar 		  string 	`json:"avatar"`
+	DisplayName   string 	`json:"display_name"`
+	Email 		  string 	`json:"email"`
+	EmailVerified bool 		`json:"email_verified"`
 }
 
 func (cfg *apiConfig) handlerNewPlayer(w http.ResponseWriter, r *http.Request) {
 	type createPlayerParams struct {
 		Username  string `json:"username"`
+		Email 	  string `json:"email"`
 		Password  string `json:"password"`
 	}
 
@@ -46,17 +50,29 @@ func (cfg *apiConfig) handlerNewPlayer(w http.ResponseWriter, r *http.Request) {
 			Valid:  true,
 			String: hashPassword,
 		},
+		Email: sql.NullString{
+			Valid: true,
+			String: newPlayer.Email,
+		},
 	})
 	if err != nil {
 		respondWithError(w, http.StatusBadRequest, "Failed to add the player to DB", err)
 		return
 	}
 
-	respondWithJSON(w, http.StatusCreated, Player{
-		Id: 		player.ID,
-		CreatedAt: 	player.CreatedAt,
-		Username: 	player.Username,
+	token, hash := verification.GenerateVerificationToken()
+	_, err = cfg.db.CreateVerificationToken(r.Context(), database.CreateVerificationTokenParams{
+		TokenHash: 	hash,
+		PlayerID: 	player.ID,
 	})
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Failed to generate verification token", err)
+		return
+	}
+
+	go verification.SendVerificationEmail(newPlayer.Email, token)
+
+	respondWithJSON(w, http.StatusCreated, nil)
 }
 
 func (cfg *apiConfig) handlerPlayerLogin(w http.ResponseWriter, r *http.Request) {
@@ -83,6 +99,11 @@ func (cfg *apiConfig) handlerPlayerLogin(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	if !player.EmailVerified.Bool {
+		respondWithError(w, http.StatusForbidden, "Player needs verification", err)
+		return
+	}
+
 	refreshToken, err := cfg.db.GetRefreshTokenFromPlayerId(r.Context(), player.ID)
 	if err != nil || time.Now().After(refreshToken.ExpiresAt) || refreshToken.RevokedAt.Valid  {
 		cfg.db.DeleteRefreshToken(r.Context(), refreshToken.Token)
@@ -105,13 +126,14 @@ func (cfg *apiConfig) handlerPlayerLogin(w http.ResponseWriter, r *http.Request)
 	}
 
 	respondWithJSON(w, http.StatusOK, Player{
-		Id: 		  player.ID,
-		CreatedAt: 	  player.CreatedAt,
-		Username: 	  player.Username,
-		RefreshToken: refreshToken.Token,
-		Token: 		  token,
-		Avatar: 	  player.Avatar.String,
-		DisplayName:  player.DisplayName.String,
+		Id: 		   player.ID,
+		CreatedAt: 	   player.CreatedAt,
+		Username: 	   player.Username,
+		RefreshToken:  refreshToken.Token,
+		Token: 		   token,
+		Avatar: 	   player.Avatar.String,
+		DisplayName:   player.DisplayName.String,
+		EmailVerified: player.EmailVerified.Bool,
 	})
 }
 

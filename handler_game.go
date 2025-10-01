@@ -47,6 +47,8 @@ func (cfg *apiConfig) handlerNewGame(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	_ = cfg.db.DeleteEmptyBoardsForPlayer(r.Context(), playerId); //don't care if error, this is just housekeeping
+
 	player1Board, err := cfg.db.CreateBoard(r.Context(), player1.ID)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Faild to initialize board for player1", err)
