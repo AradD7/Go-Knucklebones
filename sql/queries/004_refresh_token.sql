@@ -5,7 +5,7 @@ VALUES (
     NOW(),
     NOW(),
     $2,
-    NOW() + INTERVAL '60 days'
+    NOW() AT TIME ZONE 'UTC' + INTERVAL '60 days'
 )
 RETURNING *;
 --

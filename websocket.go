@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"slices"
@@ -28,6 +27,7 @@ type PlayerMessage struct {
 	Token 		string `json:"token"`
 	DisplayName string `json:"display_name"`
 	Avatar 		string `json:"avatar"`
+	Dice 		int    `json:"dice"`
 }
 
 func (cfg apiConfig) handlerWebSocket(w http.ResponseWriter, r *http.Request) {
@@ -48,7 +48,6 @@ func (cfg apiConfig) handlerWebSocket(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Println(msg)
 	_, err = auth.ValidateJWT(msg.Token, cfg.tokenSecret)
 	if err != nil {
 		return
@@ -91,8 +90,6 @@ func (gs *gameServer) broadcastToGame(gameId uuid.UUID) {
 		})
 		if err != nil {
 			fmt.Printf("ERROR sending to connection %d: %v\n", i, err)
-		} else {
-			fmt.Printf("SUCCESS: Message sent to connection %d\n", i)
 		}
 	}
 	gs.rwMux.RUnlock()
@@ -109,8 +106,20 @@ func (gs *gameServer) broadcastJoined(gameId uuid.UUID, displayName, avatar stri
 		})
 		if err != nil {
 			fmt.Printf("ERROR sending to connection %d: %v\n", i, err)
-		} else {
-			fmt.Printf("SUCCESS: Message sent to connection %d\n", i)
+		}
+	}
+	gs.rwMux.RUnlock()
+}
+
+func (gs *gameServer) broadcastRolled(gameId uuid.UUID, dice int) {
+	gs.rwMux.RLock()
+	for i, conn := range gs.connections[gameId.String()] {
+		err := conn.WriteJSON(PlayerMessage{
+			Type: "roll",
+			Dice: dice,
+		})
+		if err != nil {
+			fmt.Printf("ERROR sending to connection %d: %v\n", i, err)
 		}
 	}
 	gs.rwMux.RUnlock()

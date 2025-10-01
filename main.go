@@ -96,6 +96,7 @@ func main() {
 	mux.HandleFunc("POST /api/games/move/{game_id}", apiCfg.handlerMakeMove)
 	mux.HandleFunc("POST /api/games/localgame", apiCfg.handlerLocalGame)
 	mux.HandleFunc("POST /api/games/computergame", apiCfg.handlerComputerGame)
+	mux.HandleFunc("GET /api/games/roll", apiCfg.handlerRoll)
 
 	mux.HandleFunc("/ws/games/{game_id}", apiCfg.handlerWebSocket)
 

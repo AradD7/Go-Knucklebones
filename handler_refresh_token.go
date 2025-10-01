@@ -19,7 +19,7 @@ func (cfg *apiConfig) handlerRefresh(w http.ResponseWriter, r *http.Request) {
 	}
 
 	refreshToken, err := cfg.db.GetUserFromRefreshToken(r.Context(), token)
-	if err != nil || time.Now().After(refreshToken.ExpiresAt) || refreshToken.RevokedAt.Valid {
+	if err != nil || time.Now().UTC().After(refreshToken.ExpiresAt) || refreshToken.RevokedAt.Valid {
 		respondWithError(w, http.StatusUnauthorized, "Refresh token not valid. Login again", err)
 		return
 	}
