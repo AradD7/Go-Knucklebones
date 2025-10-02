@@ -300,9 +300,9 @@ ws.onmessage = (event) => {
 Contributions are welcome! Please feel free to submit a Pull Request.
 
 1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
+2. Create your feature branch (`git checkout -b feature/new-feature`)
+3. Commit your changes (`git commit -m 'Add some new feature'`)
+4. Push to the branch (`git push origin feature/new-feature`)
 5. Open a Pull Request
 
 
@@ -311,7 +311,3 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 - Game concept inspired by the dice game "Knucklebones" from Cult of the Lamb
 - Built with [Gorilla WebSocket](https://github.com/gorilla/websocket)
 - Database layer generated with [sqlc](https://github.com/kyleconroy/sqlc)
-
-## Contact
-
-Project Link: [https://github.com/AradD7/Go-Knuclebones](https://github.com/AradD7/Go-Knuclebones)
