@@ -1,7 +1,7 @@
 # Silly Mini Games - Knucklebones
-This is the backend of [Silly Mini Game](https://www.sillyminigames.com) built with Go, featuring real-time gameplay via WebSockets, Google OAuth authentication, and AI opponents. Silly mini games is a gamehub to play fun, simple and lesser known mini games with your friends! Currently only the game of Knucklebones is available but there is more to come!
+The backend for Silly Mini Games, built with Go and featuring real-time gameplay via WebSockets, Google OAuth authentication, and AI opponents. Silly Mini Games is planned as a game hub to play fun, simple, and lesser-known mini games with your friends! Currently only the game of Knucklebones is available, but more games are coming.
 ## Motivation
-I wanted to play knucklebones with my friends! The video game Cult of the Lamb has no online option and I could not find a way to play this game with my friends, so I decided to make a web app for it. Although currently Silly Mini Games supports Knucklebones only, but all of the non game logic code could be used to build different games which is what I intend do in the future.
+I wanted to play Knucklebones with my friends! The video game Cult of the Lamb has no online option, and I couldn't find a way to play this game with my friends, so I decided to make a web app for it. Although Silly Mini Games currently supports Knucklebones only, all of the non-game-logic code can be reused to build different games, which is what I intend to do in the future.
 ## Features
 
 - 🎲 **Multiple Game Modes**
