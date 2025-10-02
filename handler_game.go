@@ -92,7 +92,7 @@ func (cfg *apiConfig) handlerNewGame(w http.ResponseWriter, r *http.Request) {
 func (cfg *apiConfig) handlerGetGames(w http.ResponseWriter, r *http.Request) {
 	token, err := auth.GetBearerToken(r.Header)
 	if err != nil {
-		respondWithError(w, http.StatusNotFound, "Failed to get JWT token from request header", err)
+		respondWithError(w, http.StatusUnauthorized, "Failed to get JWT token from request header", err)
 		return
 	}
 

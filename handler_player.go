@@ -140,7 +140,7 @@ func (cfg *apiConfig) handlerPlayerLogin(w http.ResponseWriter, r *http.Request)
 func (cfg *apiConfig) handlerGetPlayer(w http.ResponseWriter, r *http.Request) {
 	token, err := auth.GetBearerToken(r.Header)
 	if err != nil {
-		respondWithError(w, http.StatusNotFound, "Not Authorized", err)
+		respondWithError(w, http.StatusUnauthorized, "Not Authorized", err)
 		return
 	}
 
@@ -167,7 +167,7 @@ func (cfg *apiConfig) handlerGetPlayer(w http.ResponseWriter, r *http.Request) {
 func (cfg *apiConfig) handlerUpdateProfile(w http.ResponseWriter, r *http.Request) {
 	token, err := auth.GetBearerToken(r.Header)
 	if err != nil {
-		respondWithError(w, http.StatusNotFound, "Not Authorized", err)
+		respondWithError(w, http.StatusUnauthorized, "Not Authorized", err)
 		return
 	}
 

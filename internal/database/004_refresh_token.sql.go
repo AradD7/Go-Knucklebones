@@ -18,7 +18,7 @@ VALUES (
     NOW(),
     NOW(),
     $2,
-    NOW() AT TIME ZONE 'UTC' + INTERVAL '60 days'
+    NOW() AT TIME ZONE 'UTC' + INTERVAL '7 days'
 )
 RETURNING token, created_at, updated_at, player_id, expires_at, revoked_at
 `
