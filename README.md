@@ -1,2 +1,1 @@
-# Go-Knucklebones
-work in progress
+# Silly Mini Games - Knucklebones
