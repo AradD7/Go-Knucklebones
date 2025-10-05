@@ -8,27 +8,27 @@ import (
 )
 
 type gameVsComputer struct {
-	Board1 		[][]int32 	`json:"board1"`
-	Board2 		[][]int32 	`json:"board2"`
-	NextBoard1	[][]int32 	`json:"next_board1"`
-	NextBoard2	[][]int32 	`json:"next_board2"`
-	Score1 		int			`json:"score1"`
-	Score2 		int			`json:"score2"`
-	NextScore1 	int			`json:"next_score1"`
-	NextScore2 	int			`json:"next_score2"`
-	NextDice	int 		`json:"next_dice"`
-	IsOver 		bool 		`json:"is_over"`
-	IsOverNext	bool 		`json:"is_over_next"`
+	Board1     [][]int32 `json:"board1"`
+	Board2     [][]int32 `json:"board2"`
+	NextBoard1 [][]int32 `json:"next_board1"`
+	NextBoard2 [][]int32 `json:"next_board2"`
+	Score1     int       `json:"score1"`
+	Score2     int       `json:"score2"`
+	NextScore1 int       `json:"next_score1"`
+	NextScore2 int       `json:"next_score2"`
+	NextDice   int       `json:"next_dice"`
+	IsOver     bool      `json:"is_over"`
+	IsOverNext bool      `json:"is_over_next"`
 }
 
 func (cfg *apiConfig) handlerComputerGame(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
-		Board1 		[][]int32 	`json:"board1"`
-		Board2 		[][]int32 	`json:"board2"`
-		Dice 		int 		`json:"dice"`
-		Row  		int			`json:"row"`
-		Col  		int			`json:"col"`
-		Difficulty 	string 		`json:"difficulty"`
+		Board1     [][]int32 `json:"board1"`
+		Board2     [][]int32 `json:"board2"`
+		Dice       int       `json:"dice"`
+		Row        int       `json:"row"`
+		Col        int       `json:"col"`
+		Difficulty string    `json:"difficulty"`
 	}
 
 	var params parameters
@@ -67,13 +67,13 @@ func (cfg *apiConfig) handlerComputerGame(w http.ResponseWriter, r *http.Request
 }
 
 func computerMove(board1, board2 [][]int32, difficulty string, dice int) ([][]int32, [][]int32) {
-    computerBoard := deepCopy2D(board1)
-    playerBoard   := deepCopy2D(board2)
+	computerBoard := deepCopy2D(board1)
+	playerBoard := deepCopy2D(board2)
 	type scenario struct {
-		board1 		[][]int32
-		board2 		[][]int32
-		diffScore	int
-		filledRow	int
+		board1    [][]int32
+		board2    [][]int32
+		diffScore int
+		filledRow int
 	}
 
 	var scenarios []scenario
@@ -92,10 +92,10 @@ func computerMove(board1, board2 [][]int32, difficulty string, dice int) ([][]in
 		updatedBoard1, _ := putDice(computerBoard, dice, row, col)
 		updatedBoard2 := updateOpp(playerBoard, dice, col)
 		scenarios = append(scenarios, scenario{
-			board1: 	updatedBoard1,
-			board2: 	updatedBoard2,
-			diffScore: 	int(calcScore(updatedBoard1)) - int(calcScore(updatedBoard2)),
-			filledRow: 	row,
+			board1:    updatedBoard1,
+			board2:    updatedBoard2,
+			diffScore: int(calcScore(updatedBoard1)) - int(calcScore(updatedBoard2)),
+			filledRow: row,
 		})
 	}
 
@@ -130,10 +130,10 @@ func computerMove(board1, board2 [][]int32, difficulty string, dice int) ([][]in
 }
 
 func deepCopy2D(original [][]int32) [][]int32 {
-    copied := make([][]int32, len(original))
-    for i := range original {
-        copied[i] = make([]int32, len(original[i]))
-        copy(copied[i], original[i])
-    }
-    return copied
+	copied := make([][]int32, len(original))
+	for i := range original {
+		copied[i] = make([]int32, len(original[i]))
+		copy(copied[i], original[i])
+	}
+	return copied
 }

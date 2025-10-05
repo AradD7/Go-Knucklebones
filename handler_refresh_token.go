@@ -24,7 +24,7 @@ func (cfg *apiConfig) handlerRefresh(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	jwtToken, err := auth.MakeJWT(refreshToken.PlayerID, cfg.tokenSecret, time.Minute * 60)
+	jwtToken, err := auth.MakeJWT(refreshToken.PlayerID, cfg.tokenSecret, time.Minute*60)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Failed to create new JWT token", err)
 		return

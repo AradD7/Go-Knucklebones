@@ -34,25 +34,25 @@ func corsMiddleware(next http.Handler) http.Handler {
 
 type gameServer struct {
 	connections map[string][]*websocket.Conn
-	rwMux 		*sync.RWMutex
+	rwMux       *sync.RWMutex
 }
 
 type apiConfig struct {
-	db 				*database.Queries
-	tokenSecret		string
-	googleClientId 	string
-	platform 		string
-	gs  			*gameServer
+	db             *database.Queries
+	tokenSecret    string
+	googleClientId string
+	platform       string
+	gs             *gameServer
 }
 
 func main() {
 	godotenv.Load()
 
-	secret 				:= os.Getenv("TOKEN_SECERT")
-	clientId 			:= os.Getenv("GOOGLE_CLIENT_ID")
-	const port 			= "8080"
-	const filepathRoot 	= "."
-	dbURL 				:= os.Getenv("DB_URL")
+	secret := os.Getenv("TOKEN_SECERT")
+	clientId := os.Getenv("GOOGLE_CLIENT_ID")
+	const port = "8080"
+	const filepathRoot = "."
+	dbURL := os.Getenv("DB_URL")
 
 	db, err := sql.Open("postgres", dbURL)
 	if err != nil {
@@ -60,13 +60,13 @@ func main() {
 	}
 
 	apiCfg := apiConfig{
-		db: 		 	database.New(db),
-		tokenSecret: 	secret,
+		db:             database.New(db),
+		tokenSecret:    secret,
 		googleClientId: clientId,
-		platform: 	 	os.Getenv("PLATFORM"),
-		gs: 		 	&gameServer{
+		platform:       os.Getenv("PLATFORM"),
+		gs: &gameServer{
 			connections: make(map[string][]*websocket.Conn),
-			rwMux: 		 &sync.RWMutex{},
+			rwMux:       &sync.RWMutex{},
 		},
 	}
 
@@ -100,11 +100,9 @@ func main() {
 
 	mux.HandleFunc("/ws/games/{game_id}", apiCfg.handlerWebSocket)
 
-
-
 	srv := &http.Server{
 		Handler: corsMiddleware(mux),
-		Addr: 	 ":" + port,
+		Addr:    ":" + port,
 	}
 
 	fmt.Printf("Api available on port:%s\n", port)

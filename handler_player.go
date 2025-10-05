@@ -13,22 +13,22 @@ import (
 )
 
 type Player struct {
-	Id 			  uuid.UUID	`json:"id"`
-	CreatedAt	  time.Time `json:"created_at"`
-	Username 	  string  	`json:"username"`
-	RefreshToken  string 	`json:"refresh_token"`
-	Token 		  string 	`json:"token"`
-	Avatar 		  string 	`json:"avatar"`
-	DisplayName   string 	`json:"display_name"`
-	Email 		  string 	`json:"email"`
-	EmailVerified bool 		`json:"email_verified"`
+	Id            uuid.UUID `json:"id"`
+	CreatedAt     time.Time `json:"created_at"`
+	Username      string    `json:"username"`
+	RefreshToken  string    `json:"refresh_token"`
+	Token         string    `json:"token"`
+	Avatar        string    `json:"avatar"`
+	DisplayName   string    `json:"display_name"`
+	Email         string    `json:"email"`
+	EmailVerified bool      `json:"email_verified"`
 }
 
 func (cfg *apiConfig) handlerNewPlayer(w http.ResponseWriter, r *http.Request) {
 	type createPlayerParams struct {
-		Username  string `json:"username"`
-		Email 	  string `json:"email"`
-		Password  string `json:"password"`
+		Username string `json:"username"`
+		Email    string `json:"email"`
+		Password string `json:"password"`
 	}
 
 	decoder := json.NewDecoder(r.Body)
@@ -45,13 +45,13 @@ func (cfg *apiConfig) handlerNewPlayer(w http.ResponseWriter, r *http.Request) {
 	}
 
 	player, err := cfg.db.CreatePlayer(r.Context(), database.CreatePlayerParams{
-		Username: 		newPlayer.Username,
+		Username: newPlayer.Username,
 		HashedPassword: sql.NullString{
 			Valid:  true,
 			String: hashPassword,
 		},
 		Email: sql.NullString{
-			Valid: true,
+			Valid:  true,
 			String: newPlayer.Email,
 		},
 	})
@@ -62,8 +62,8 @@ func (cfg *apiConfig) handlerNewPlayer(w http.ResponseWriter, r *http.Request) {
 
 	token, hash := verification.GenerateVerificationToken()
 	_, err = cfg.db.CreateVerificationToken(r.Context(), database.CreateVerificationTokenParams{
-		TokenHash: 	hash,
-		PlayerID: 	player.ID,
+		TokenHash: hash,
+		PlayerID:  player.ID,
 	})
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Failed to generate verification token", err)
@@ -77,8 +77,8 @@ func (cfg *apiConfig) handlerNewPlayer(w http.ResponseWriter, r *http.Request) {
 
 func (cfg *apiConfig) handlerPlayerLogin(w http.ResponseWriter, r *http.Request) {
 	type loginPlayerParams struct {
-		Username  string `json:"username"`
-		Password  string `json:"password"`
+		Username string `json:"username"`
+		Password string `json:"password"`
 	}
 
 	decoder := json.NewDecoder(r.Body)
@@ -105,12 +105,12 @@ func (cfg *apiConfig) handlerPlayerLogin(w http.ResponseWriter, r *http.Request)
 	}
 
 	refreshToken, err := cfg.db.GetRefreshTokenFromPlayerId(r.Context(), player.ID)
-	if err != nil || time.Now().UTC().After(refreshToken.ExpiresAt) || refreshToken.RevokedAt.Valid  {
+	if err != nil || time.Now().UTC().After(refreshToken.ExpiresAt) || refreshToken.RevokedAt.Valid {
 		cfg.db.DeleteRefreshToken(r.Context(), refreshToken.Token)
 
 		refreshToken, err = cfg.db.CreateRefreshToken(r.Context(), database.CreateRefreshTokenParams{
-			Token: 		auth.MakeRefreshToken(),
-			PlayerID: 	player.ID,
+			Token:    auth.MakeRefreshToken(),
+			PlayerID: player.ID,
 		})
 	}
 
@@ -119,19 +119,19 @@ func (cfg *apiConfig) handlerPlayerLogin(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	token, err := auth.MakeJWT(player.ID, cfg.tokenSecret, time.Minute * 60)
+	token, err := auth.MakeJWT(player.ID, cfg.tokenSecret, time.Minute*60)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Failed to create new JWT token", err)
 		return
 	}
 
 	respondWithJSON(w, http.StatusOK, Player{
-		Id: 		   player.ID,
-		CreatedAt: 	   player.CreatedAt,
-		Username: 	   player.Username,
+		Id:            player.ID,
+		CreatedAt:     player.CreatedAt,
+		Username:      player.Username,
 		RefreshToken:  refreshToken.Token,
-		Token: 		   token,
-		Avatar: 	   player.Avatar.String,
+		Token:         token,
+		Avatar:        player.Avatar.String,
 		DisplayName:   player.DisplayName.String,
 		EmailVerified: player.EmailVerified.Bool,
 	})
@@ -157,9 +157,9 @@ func (cfg *apiConfig) handlerGetPlayer(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respondWithJSON(w, http.StatusOK, Player{
-		Id: 		 player.ID,
-		Username: 	 player.Username,
-		Avatar: 	 player.Avatar.String,
+		Id:          player.ID,
+		Username:    player.Username,
+		Avatar:      player.Avatar.String,
 		DisplayName: player.DisplayName.String,
 	})
 }
@@ -179,7 +179,7 @@ func (cfg *apiConfig) handlerUpdateProfile(w http.ResponseWriter, r *http.Reques
 
 	type paramaters struct {
 		DisplayName string `json:"display_name"`
-		Avatar 		string `json:"avatar"`
+		Avatar      string `json:"avatar"`
 	}
 
 	decoder := json.NewDecoder(r.Body)
@@ -190,12 +190,12 @@ func (cfg *apiConfig) handlerUpdateProfile(w http.ResponseWriter, r *http.Reques
 	}
 
 	if err = cfg.db.UpdateProfile(r.Context(), database.UpdateProfileParams{
-		ID: 		 playerId,
+		ID: playerId,
 		DisplayName: sql.NullString{
-			Valid: 	params.DisplayName != "",
+			Valid:  params.DisplayName != "",
 			String: params.DisplayName,
 		},
-		Avatar: 	 sql.NullString{
+		Avatar: sql.NullString{
 			Valid:  params.Avatar != "",
 			String: params.Avatar,
 		},

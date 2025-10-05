@@ -4,12 +4,12 @@ import "testing"
 
 func TestMove(t *testing.T) {
 	type TestTable struct {
-		playerBoard 		[][][]int32
-		diceRowCol 			[][]int
-		oppBoard 			[][][]int32
-		updatedPlayerBoard 	[][][]int32
-		updatedOppBoard 	[][][]int32
-		playerScore 		[]int32
+		playerBoard        [][][]int32
+		diceRowCol         [][]int
+		oppBoard           [][][]int32
+		updatedPlayerBoard [][][]int32
+		updatedOppBoard    [][][]int32
+		playerScore        []int32
 	}
 
 	tests := TestTable{

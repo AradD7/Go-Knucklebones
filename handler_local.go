@@ -6,21 +6,21 @@ import (
 )
 
 type GameState struct {
-	Board1 	[][]int32 	`json:"board1"`
-	Board2 	[][]int32 	`json:"board2"`
-	Score1 	int			`json:"score1"`
-	Score2 	int			`json:"score2"`
-	IsOver 	bool 		`json:"is_over"`
+	Board1 [][]int32 `json:"board1"`
+	Board2 [][]int32 `json:"board2"`
+	Score1 int       `json:"score1"`
+	Score2 int       `json:"score2"`
+	IsOver bool      `json:"is_over"`
 }
 
 func (cfg *apiConfig) handlerLocalGame(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
-		Board1 	[][]int32 	`json:"board1"`
-		Board2 	[][]int32 	`json:"board2"`
-		Turn 	string 		`json:"turn"` //either "player1" or "player2"
-		Dice 	int 		`json:"dice"`
-		Row  	int			`json:"row"`
-		Col  	int			`json:"col"`
+		Board1 [][]int32 `json:"board1"`
+		Board2 [][]int32 `json:"board2"`
+		Turn   string    `json:"turn"` //either "player1" or "player2"
+		Dice   int       `json:"dice"`
+		Row    int       `json:"row"`
+		Col    int       `json:"col"`
 	}
 
 	var params parameters
@@ -56,7 +56,7 @@ func (cfg *apiConfig) handlerLocalGame(w http.ResponseWriter, r *http.Request) {
 		updatedGameState.IsOver = isFull(updatedBoard2)
 	default:
 		respondWithError(w, http.StatusBadRequest, "Turn field cannot be empty", nil)
-		}
+	}
 
 	respondWithJSON(w, http.StatusOK, updatedGameState)
 }

@@ -19,9 +19,9 @@ func (cfg *apiConfig) handlerMakeMove(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type moveParameters struct {
-		Dice  int `json:"dice"`
-		Row   int `json:"row"`
-		Col   int `json:"col"`
+		Dice int `json:"dice"`
+		Row  int `json:"row"`
+		Col  int `json:"col"`
 	}
 
 	token, err := auth.GetBearerToken(r.Header)
@@ -44,10 +44,10 @@ func (cfg *apiConfig) handlerMakeMove(w http.ResponseWriter, r *http.Request) {
 	}
 
 	playerBoard, err := cfg.db.GetBoardByPlayerIdAndGameId(r.Context(), database.GetBoardByPlayerIdAndGameIdParams{
-		PlayerID: 	playerId,
-		GameID: 	uuid.NullUUID{
-			Valid: 	true,
-			UUID: 	gameId,
+		PlayerID: playerId,
+		GameID: uuid.NullUUID{
+			Valid: true,
+			UUID:  gameId,
 		},
 	})
 	if err != nil {
@@ -95,7 +95,7 @@ func (cfg *apiConfig) handlerMakeMove(w http.ResponseWriter, r *http.Request) {
 		isGameOver = true
 		if calcScore(updatedPlayerBoard) > calcScore(updatedOppBoard) {
 			cfg.db.SetGameWinner(r.Context(), database.SetGameWinnerParams{
-				ID: 	currentGame.ID,
+				ID: currentGame.ID,
 				Winner: uuid.NullUUID{
 					Valid: true,
 					UUID:  playerBoard.PlayerID,
@@ -103,7 +103,7 @@ func (cfg *apiConfig) handlerMakeMove(w http.ResponseWriter, r *http.Request) {
 			})
 		} else {
 			cfg.db.SetGameWinner(r.Context(), database.SetGameWinnerParams{
-				ID: 	currentGame.ID,
+				ID: currentGame.ID,
 				Winner: uuid.NullUUID{
 					Valid: true,
 					UUID:  oppBoard.PlayerID,
@@ -124,7 +124,7 @@ func (cfg *apiConfig) handlerMakeMove(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err = cfg.db.UpdateBoard(r.Context(), database.UpdateBoardParams{
-		ID: playerBoard.ID,
+		ID:    playerBoard.ID,
 		Board: updatedPlayerBoardJSON,
 		Score: sql.NullInt32{
 			Valid: true,
@@ -135,7 +135,7 @@ func (cfg *apiConfig) handlerMakeMove(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err = cfg.db.UpdateBoard(r.Context(), database.UpdateBoardParams{
-		ID: oppBoardId,
+		ID:    oppBoardId,
 		Board: updatedOppBoardJSON,
 		Score: sql.NullInt32{
 			Valid: true,
@@ -147,10 +147,10 @@ func (cfg *apiConfig) handlerMakeMove(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err = cfg.db.SetPlayerTurn(r.Context(), database.SetPlayerTurnParams{
-		ID: 		currentGame.ID,
+		ID: currentGame.ID,
 		PlayerTurn: uuid.NullUUID{
-			Valid: 	true,
-			UUID: 	oppBoard.PlayerID,
+			Valid: true,
+			UUID:  oppBoard.PlayerID,
 		},
 	}); err != nil {
 		respondWithError(w, http.StatusInternalServerError, "failed to assign turn", err)
@@ -194,7 +194,7 @@ func putDice(originalBoard [][]int32, dice, row, col int) ([][]int32, error) {
 		return board, fmt.Errorf("Already full! Place dice in another cell")
 	}
 
-	if row < 2 && board[row + 1][col] == 0 {
+	if row < 2 && board[row+1][col] == 0 {
 		return board, fmt.Errorf("Can't place here! Bottom cell is empty")
 	}
 
@@ -202,7 +202,7 @@ func putDice(originalBoard [][]int32, dice, row, col int) ([][]int32, error) {
 	return board, nil
 }
 
-func updateOpp(originalBoard [][]int32, dice, col int) ([][]int32) {
+func updateOpp(originalBoard [][]int32, dice, col int) [][]int32 {
 	board := deepCopy2D(originalBoard)
 	for row := range 3 {
 		if board[row][col] == int32(dice) {

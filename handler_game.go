@@ -11,21 +11,21 @@ import (
 	"github.com/google/uuid"
 )
 
-type Game struct{
-	Id 			uuid.UUID `json:"id"`
-	CreatedAt	time.Time `json:"created_at"`
-	Board1 		[][]int32 `json:"board1"`
-	Board2		[][]int32 `json:"board2"`
-	Score1 		int		  `json:"score1"`
-	Score2 		int		  `json:"score2"`
-	IsTurn 		bool 	  `json:"is_turn"`
-	IsOver 		bool 	  `json:"is_over"`
-	OppName 	string 	  `json:"opp_name"`
-	OppAvatar  	string 	  `json:"opp_avatar"`
+type Game struct {
+	Id        uuid.UUID `json:"id"`
+	CreatedAt time.Time `json:"created_at"`
+	Board1    [][]int32 `json:"board1"`
+	Board2    [][]int32 `json:"board2"`
+	Score1    int       `json:"score1"`
+	Score2    int       `json:"score2"`
+	IsTurn    bool      `json:"is_turn"`
+	IsOver    bool      `json:"is_over"`
+	OppName   string    `json:"opp_name"`
+	OppAvatar string    `json:"opp_avatar"`
 }
 
 type GameIds struct {
-	Ids 	[]uuid.UUID `json:"ids"`
+	Ids []uuid.UUID `json:"ids"`
 }
 
 func (cfg *apiConfig) handlerNewGame(w http.ResponseWriter, r *http.Request) {
@@ -47,7 +47,7 @@ func (cfg *apiConfig) handlerNewGame(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_ = cfg.db.DeleteEmptyBoardsForPlayer(r.Context(), playerId); //don't care if error, this is just housekeeping
+	_ = cfg.db.DeleteEmptyBoardsForPlayer(r.Context(), playerId) //don't care if error, this is just housekeeping
 
 	player1Board, err := cfg.db.CreateBoard(r.Context(), player1.ID)
 	if err != nil {
@@ -69,7 +69,7 @@ func (cfg *apiConfig) handlerNewGame(w http.ResponseWriter, r *http.Request) {
 			Valid: true,
 			UUID:  newGame.ID,
 		},
-		ID: 	player1Board.ID,
+		ID: player1Board.ID,
 	}); err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Faild to link board1 to game", err)
 		return
@@ -82,10 +82,10 @@ func (cfg *apiConfig) handlerNewGame(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respondWithJSON(w, http.StatusCreated, Game{
-		Id: 		newGame.ID,
-		CreatedAt: 	newGame.CreatedAt,
-		Board1: 	player1BoardData,
-		Board2: 	nil,
+		Id:        newGame.ID,
+		CreatedAt: newGame.CreatedAt,
+		Board1:    player1BoardData,
+		Board2:    nil,
 	})
 }
 
@@ -165,28 +165,28 @@ func (cfg *apiConfig) handlerGetGame(w http.ResponseWriter, r *http.Request) {
 
 	if board1.PlayerID == playerId {
 		respondWithJSON(w, http.StatusOK, Game{
-			Id: 		game.ID,
-			CreatedAt: 	game.CreatedAt,
-			Board1:  	board1Data,
-			Board2: 	board2Data,
-			Score1: 	int(board1.Score.Int32),
-			Score2: 	int(board2.Score.Int32),
-			IsTurn:  	game.PlayerTurn.UUID == playerId,
-			IsOver: 	game.Winner.Valid,
+			Id:        game.ID,
+			CreatedAt: game.CreatedAt,
+			Board1:    board1Data,
+			Board2:    board2Data,
+			Score1:    int(board1.Score.Int32),
+			Score2:    int(board2.Score.Int32),
+			IsTurn:    game.PlayerTurn.UUID == playerId,
+			IsOver:    game.Winner.Valid,
 		})
 		return
 	}
 
 	if board2.PlayerID == playerId {
 		respondWithJSON(w, http.StatusOK, Game{
-			Id: 		game.ID,
-			CreatedAt: 	game.CreatedAt,
-			Board1:  	board2Data,
-			Board2: 	board1Data,
-			Score1: 	int(board2.Score.Int32),
-			Score2: 	int(board1.Score.Int32),
-			IsTurn:  	game.PlayerTurn.UUID == playerId,
-			IsOver: 	game.Winner.Valid,
+			Id:        game.ID,
+			CreatedAt: game.CreatedAt,
+			Board1:    board2Data,
+			Board2:    board1Data,
+			Score1:    int(board2.Score.Int32),
+			Score2:    int(board1.Score.Int32),
+			IsTurn:    game.PlayerTurn.UUID == playerId,
+			IsOver:    game.Winner.Valid,
 		})
 		return
 	}
@@ -229,14 +229,14 @@ func (cfg *apiConfig) handlerJoinGame(w http.ResponseWriter, r *http.Request) {
 			Valid: true,
 			UUID:  playerBoard.ID,
 		},
-		ID: 	gameId,
+		ID: gameId,
 	}); err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Falied to join game", err)
 		return
 	}
 
 	if err = cfg.db.LinkGame(r.Context(), database.LinkGameParams{
-		ID: 	playerBoard.ID,
+		ID: playerBoard.ID,
 		GameID: uuid.NullUUID{
 			Valid: true,
 			UUID:  gameId,
@@ -245,7 +245,6 @@ func (cfg *apiConfig) handlerJoinGame(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, http.StatusInternalServerError, "Falied to link game to board", err)
 		return
 	}
-
 
 	oppBoard, err := cfg.db.GetBoardById(r.Context(), currentGame.Board1)
 	if err != nil {
@@ -270,10 +269,10 @@ func (cfg *apiConfig) handlerJoinGame(w http.ResponseWriter, r *http.Request) {
 		playerTurnId = playerId
 	}
 	if err = cfg.db.SetPlayerTurn(r.Context(), database.SetPlayerTurnParams{
-		ID: 		gameId,
+		ID: gameId,
 		PlayerTurn: uuid.NullUUID{
-			Valid: 	true,
-			UUID: 	playerTurnId,
+			Valid: true,
+			UUID:  playerTurnId,
 		},
 	}); err != nil {
 		respondWithError(w, http.StatusInternalServerError, "failed to assign turn", err)
@@ -292,13 +291,13 @@ func (cfg *apiConfig) handlerJoinGame(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respondWithJSON(w, http.StatusCreated, Game{
-		Id: 		gameId,
-		CreatedAt: 	currentGame.CreatedAt,
-		Board1: 	playerBoardData,
-		Board2: 	oppBoardData,
-		IsTurn:  	playerId == playerTurnId,
-		OppName: 	oppDisplayName,
-		OppAvatar: 	opp.Avatar.String,
+		Id:        gameId,
+		CreatedAt: currentGame.CreatedAt,
+		Board1:    playerBoardData,
+		Board2:    oppBoardData,
+		IsTurn:    playerId == playerTurnId,
+		OppName:   oppDisplayName,
+		OppAvatar: opp.Avatar.String,
 	})
 
 	player, err := cfg.db.GetPlayerByPlayerId(r.Context(), playerId)

@@ -56,7 +56,7 @@ func (q *Queries) DeleteRefreshToken(ctx context.Context, token string) error {
 const getRefreshTokenFromPlayerId = `-- name: GetRefreshTokenFromPlayerId :one
 
 SELECT token, created_at, updated_at, player_id, expires_at, revoked_at FROM refresh_tokens
-WHERE player_id = $1 AND (revoked_at != NULL OR expires_at >= NOW())
+WHERE player_id = $1 AND (revoked_at != NULL OR expires_at >= NOW() AT TIME ZONE 'UTC')
 `
 
 func (q *Queries) GetRefreshTokenFromPlayerId(ctx context.Context, playerID uuid.UUID) (RefreshToken, error) {
@@ -96,7 +96,7 @@ func (q *Queries) GetUserFromRefreshToken(ctx context.Context, token string) (Re
 const revokeRefreshToken = `-- name: RevokeRefreshToken :exec
 
 UPDATE refresh_tokens
-SET revoked_at = NOW(), updated_at = NOW()
+SET revoked_at = NOW() AT TIME ZONE 'UTC', updated_at = NOW() AT TIME ZONE 'UTC'
 WHERE token = $1
 `
 

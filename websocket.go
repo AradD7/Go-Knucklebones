@@ -18,21 +18,22 @@ var (
 		CheckOrigin: func(r *http.Request) bool {
 			// Allow connections from your React dev server
 			origin := r.Header.Get("Origin")
-			return origin == os.Getenv("FRONTEND_URL")		},
+			return origin == os.Getenv("FRONTEND_URL")
+		},
 	}
 )
 
 type PlayerMessage struct {
-	Type 		string `json:"type"`
-	Token 		string `json:"token"`
+	Type        string `json:"type"`
+	Token       string `json:"token"`
 	DisplayName string `json:"display_name"`
-	Avatar 		string `json:"avatar"`
-	Dice 		int    `json:"dice"`
+	Avatar      string `json:"avatar"`
+	Dice        int    `json:"dice"`
 }
 
 func (cfg apiConfig) handlerWebSocket(w http.ResponseWriter, r *http.Request) {
 	gameId := r.PathValue("game_id")
-	if gameId == ""{
+	if gameId == "" {
 		respondWithError(w, http.StatusBadRequest, "faild to get gameid from url", nil)
 		return
 	}
@@ -99,10 +100,9 @@ func (gs *gameServer) broadcastJoined(gameId uuid.UUID, displayName, avatar stri
 	gs.rwMux.RLock()
 	for i, conn := range gs.connections[gameId.String()] {
 		err := conn.WriteJSON(PlayerMessage{
-			Type: 		 "joined",
+			Type:        "joined",
 			DisplayName: displayName,
-			Avatar: 	 avatar,
-
+			Avatar:      avatar,
 		})
 		if err != nil {
 			fmt.Printf("ERROR sending to connection %d: %v\n", i, err)

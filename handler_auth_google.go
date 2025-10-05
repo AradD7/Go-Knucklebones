@@ -30,8 +30,8 @@ func (cfg *apiConfig) handlerAuthGoogle(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	googleId  := payload.Subject
-	email 	  := payload.Claims["email"].(string)
+	googleId := payload.Subject
+	email := payload.Claims["email"].(string)
 	firstName := payload.Claims["given_name"].(string)
 
 	player, err := cfg.db.GetPlayerByGoogleId(r.Context(), sql.NullString{
@@ -61,12 +61,12 @@ func (cfg *apiConfig) handlerAuthGoogle(w http.ResponseWriter, r *http.Request) 
 	}
 
 	refreshToken, err := cfg.db.GetRefreshTokenFromPlayerId(r.Context(), player.ID)
-	if err != nil || time.Now().UTC().After(refreshToken.ExpiresAt) || refreshToken.RevokedAt.Valid  {
+	if err != nil || time.Now().UTC().After(refreshToken.ExpiresAt) || refreshToken.RevokedAt.Valid {
 		cfg.db.DeleteRefreshToken(r.Context(), refreshToken.Token)
 
 		refreshToken, err = cfg.db.CreateRefreshToken(r.Context(), database.CreateRefreshTokenParams{
-			Token: 		auth.MakeRefreshToken(),
-			PlayerID: 	player.ID,
+			Token:    auth.MakeRefreshToken(),
+			PlayerID: player.ID,
 		})
 	}
 
@@ -75,19 +75,19 @@ func (cfg *apiConfig) handlerAuthGoogle(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	token, err := auth.MakeJWT(player.ID, cfg.tokenSecret, time.Minute * 60)
+	token, err := auth.MakeJWT(player.ID, cfg.tokenSecret, time.Minute*60)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Failed to create new JWT token", err)
 		return
 	}
 
 	respondWithJSON(w, http.StatusOK, Player{
-		Id: 		  player.ID,
-		CreatedAt: 	  player.CreatedAt,
-		Username: 	  player.Username,
+		Id:           player.ID,
+		CreatedAt:    player.CreatedAt,
+		Username:     player.Username,
 		RefreshToken: refreshToken.Token,
-		Token: 		  token,
-		Avatar: 	  player.Avatar.String,
+		Token:        token,
+		Avatar:       player.Avatar.String,
 		DisplayName:  player.DisplayName.String,
 	})
 }
