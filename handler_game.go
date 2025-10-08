@@ -81,6 +81,7 @@ func (cfg *apiConfig) handlerNewGame(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
 	respondWithJSON(w, http.StatusCreated, Game{
 		Id:        newGame.ID,
 		CreatedAt: newGame.CreatedAt,
@@ -163,6 +164,7 @@ func (cfg *apiConfig) handlerGetGame(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
 	if board1.PlayerID == playerId {
 		respondWithJSON(w, http.StatusOK, Game{
 			Id:        game.ID,
@@ -216,6 +218,10 @@ func (cfg *apiConfig) handlerJoinGame(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		respondWithError(w, http.StatusNotFound, "Game not found", err)
 		return
+	}
+
+	if currentGame.Board2.Valid {
+
 	}
 
 	playerBoard, err := cfg.db.CreateBoard(r.Context(), playerId)
@@ -290,6 +296,7 @@ func (cfg *apiConfig) handlerJoinGame(w http.ResponseWriter, r *http.Request) {
 		oppDisplayName = opp.DisplayName.String
 	}
 
+	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
 	respondWithJSON(w, http.StatusCreated, Game{
 		Id:        gameId,
 		CreatedAt: currentGame.CreatedAt,
