@@ -5,7 +5,6 @@ CREATE TABLE boards (
     updated_at  TIMESTAMP NOT NULL,
     board       INTEGER[3][3] NOT NULL,
     player_id   UUID NOT NULL REFERENCES players(id) ON DELETE CASCADE
-
 );
 
 -- +goose Down

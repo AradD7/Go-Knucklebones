@@ -15,6 +15,23 @@ SET winner = $2, updated_at = NOW()
 WHERE id = $1;
 --
 
+-- name: GetGamesWithPlayerId :many
+SELECT
+    g.id AS game_id,
+    g.created_at AS date,
+    CASE
+        WHEN b1.player_id = $1 THEN p2.display_name
+        ELSE p1.display_name
+    END::TEXT AS opponent_name,
+    g.winner AS winner_id
+FROM games g
+JOIN boards b1 ON g.board1 = b1.id
+JOIN boards b2 ON g.board2 = b2.id
+JOIN players p1 ON b1.player_id = p1.id
+JOIN players p2 ON b2.player_id = p2.id
+WHERE b1.player_id = $1 OR b2.player_id = $1;
+--
+
 -- name: GetGameById :one
 SELECT * FROM games
 WHERE id = $1;

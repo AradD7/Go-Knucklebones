@@ -87,36 +87,6 @@ func (q *Queries) GetBoardByPlayerIdAndGameId(ctx context.Context, arg GetBoardB
 	return i, err
 }
 
-const getGamesWithPlayerId = `-- name: GetGamesWithPlayerId :many
-
-SELECT game_id
-FROM boards
-WHERE player_id = $1
-`
-
-func (q *Queries) GetGamesWithPlayerId(ctx context.Context, playerID uuid.UUID) ([]uuid.NullUUID, error) {
-	rows, err := q.db.QueryContext(ctx, getGamesWithPlayerId, playerID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []uuid.NullUUID
-	for rows.Next() {
-		var game_id uuid.NullUUID
-		if err := rows.Scan(&game_id); err != nil {
-			return nil, err
-		}
-		items = append(items, game_id)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const getPlayerUsernameByBoardId = `-- name: GetPlayerUsernameByBoardId :one
 
 SELECT players.username

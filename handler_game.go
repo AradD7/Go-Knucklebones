@@ -24,8 +24,11 @@ type Game struct {
 	OppAvatar string    `json:"opp_avatar"`
 }
 
-type GameIds struct {
-	Ids []uuid.UUID `json:"ids"`
+type GameOverview struct {
+	Id        uuid.UUID `json:"id"`
+	CreatedAt time.Time `json:"date"`
+	Status    int	    `json:"status"` //-1 means lost, 0 means in progress, 1 means won
+	OppName   string    `json:"opp_name"`
 }
 
 func (cfg *apiConfig) handlerNewGame(w http.ResponseWriter, r *http.Request) {
@@ -103,17 +106,32 @@ func (cfg *apiConfig) handlerGetGames(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	gameIds, err := cfg.db.GetGamesWithPlayerId(r.Context(), playerId)
+	playerGames, err := cfg.db.GetGamesWithPlayerId(r.Context(), playerId)
 	if err != nil {
 		respondWithError(w, http.StatusNotFound, "Faild to get player games from DB", err)
 		return
 	}
 
-	var games GameIds
-	for _, id := range gameIds {
-		games.Ids = append(games.Ids, id.UUID)
+	var games []GameOverview
+	for _, game := range playerGames {
+		status := 0
+		if game.WinnerID.Valid {
+			switch game.WinnerID.UUID {
+			case playerId:
+				status = 1
+			default:
+				status = -1
+			}
+		}
+		games = append(games, GameOverview{
+			Id: 		game.GameID,
+			CreatedAt: 	game.Date,
+			OppName: 	game.OpponentName,
+			Status: 	status,
+		})
 	}
 
+	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
 	respondWithJSON(w, http.StatusOK, games)
 }
 

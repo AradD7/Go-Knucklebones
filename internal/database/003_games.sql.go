@@ -7,6 +7,7 @@ package database
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -76,6 +77,59 @@ func (q *Queries) GetGameById(ctx context.Context, id uuid.UUID) (Game, error) {
 		&i.PlayerTurn,
 	)
 	return i, err
+}
+
+const getGamesWithPlayerId = `-- name: GetGamesWithPlayerId :many
+
+SELECT
+    g.id AS game_id,
+    g.created_at AS date,
+    CASE
+        WHEN b1.player_id = $1 THEN p2.display_name
+        ELSE p1.display_name
+    END::TEXT AS opponent_name,
+    g.winner AS winner_id
+FROM games g
+JOIN boards b1 ON g.board1 = b1.id
+JOIN boards b2 ON g.board2 = b2.id
+JOIN players p1 ON b1.player_id = p1.id
+JOIN players p2 ON b2.player_id = p2.id
+WHERE b1.player_id = $1 OR b2.player_id = $1
+`
+
+type GetGamesWithPlayerIdRow struct {
+	GameID       uuid.UUID
+	Date         time.Time
+	OpponentName string
+	WinnerID     uuid.NullUUID
+}
+
+func (q *Queries) GetGamesWithPlayerId(ctx context.Context, playerID uuid.UUID) ([]GetGamesWithPlayerIdRow, error) {
+	rows, err := q.db.QueryContext(ctx, getGamesWithPlayerId, playerID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetGamesWithPlayerIdRow
+	for rows.Next() {
+		var i GetGamesWithPlayerIdRow
+		if err := rows.Scan(
+			&i.GameID,
+			&i.Date,
+			&i.OpponentName,
+			&i.WinnerID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const joinGame = `-- name: JoinGame :exec
