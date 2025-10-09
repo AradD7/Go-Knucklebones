@@ -182,8 +182,20 @@ func (cfg *apiConfig) handlerGetGame(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+
 	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
 	if board1.PlayerID == playerId {
+		opp, err := cfg.db.GetPlayerByPlayerId(r.Context(), board2.PlayerID)
+		if err != nil {
+			respondWithError(w, http.StatusInternalServerError, "failed to get player info to broadcast", err)
+			return
+		}
+
+		oppDisplayName := opp.Username
+		if opp.DisplayName.Valid {
+			oppDisplayName = opp.DisplayName.String
+		}
+
 		respondWithJSON(w, http.StatusOK, Game{
 			Id:        game.ID,
 			CreatedAt: game.CreatedAt,
@@ -191,6 +203,8 @@ func (cfg *apiConfig) handlerGetGame(w http.ResponseWriter, r *http.Request) {
 			Board2:    board2Data,
 			Score1:    int(board1.Score.Int32),
 			Score2:    int(board2.Score.Int32),
+			OppName:   oppDisplayName,
+			OppAvatar: opp.Avatar.String,
 			IsTurn:    game.PlayerTurn.UUID == playerId,
 			IsOver:    game.Winner.Valid,
 		})
@@ -198,6 +212,17 @@ func (cfg *apiConfig) handlerGetGame(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if board2.PlayerID == playerId {
+		opp, err := cfg.db.GetPlayerByPlayerId(r.Context(), board1.PlayerID)
+		if err != nil {
+			respondWithError(w, http.StatusInternalServerError, "failed to get player info to broadcast", err)
+			return
+		}
+
+		oppDisplayName := opp.Username
+		if opp.DisplayName.Valid {
+			oppDisplayName = opp.DisplayName.String
+		}
+
 		respondWithJSON(w, http.StatusOK, Game{
 			Id:        game.ID,
 			CreatedAt: game.CreatedAt,
@@ -205,6 +230,8 @@ func (cfg *apiConfig) handlerGetGame(w http.ResponseWriter, r *http.Request) {
 			Board2:    board1Data,
 			Score1:    int(board2.Score.Int32),
 			Score2:    int(board1.Score.Int32),
+			OppName:   oppDisplayName,
+			OppAvatar: opp.Avatar.String,
 			IsTurn:    game.PlayerTurn.UUID == playerId,
 			IsOver:    game.Winner.Valid,
 		})
@@ -239,7 +266,8 @@ func (cfg *apiConfig) handlerJoinGame(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if currentGame.Board2.Valid {
-
+		respondWithError(w, http.StatusConflict, "Already in game", nil)
+		return
 	}
 
 	playerBoard, err := cfg.db.CreateBoard(r.Context(), playerId)

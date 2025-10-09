@@ -29,7 +29,11 @@ JOIN boards b1 ON g.board1 = b1.id
 JOIN boards b2 ON g.board2 = b2.id
 JOIN players p1 ON b1.player_id = p1.id
 JOIN players p2 ON b2.player_id = p2.id
-WHERE b1.player_id = $1 OR b2.player_id = $1;
+WHERE (b1.player_id = $1 OR b2.player_id = $1)
+    AND (
+        b1.board != '[[0, 0, 0], [0, 0, 0], [0, 0, 0]]'::jsonb
+        OR b2.board != '[[0, 0, 0], [0, 0, 0], [0, 0, 0]]'::jsonb
+    );
 --
 
 -- name: GetGameById :one
