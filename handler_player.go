@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/AradD7/Go-Knuclebones/internal/auth"
@@ -40,7 +41,7 @@ func (cfg *apiConfig) handlerNewPlayer(w http.ResponseWriter, r *http.Request) {
 
 	hashPassword, err := auth.HashPassword(newPlayer.Password)
 	if err != nil {
-		respondWithError(w, http.StatusBadRequest, "Failed to has the password", err)
+		respondWithError(w, http.StatusInternalServerError, "Failed to hash the password", err)
 		return
 	}
 
@@ -56,7 +57,15 @@ func (cfg *apiConfig) handlerNewPlayer(w http.ResponseWriter, r *http.Request) {
 		},
 	})
 	if err != nil {
-		respondWithError(w, http.StatusBadRequest, "Failed to add the player to DB", err)
+		if strings.Contains(err.Error(), "email"){
+			respondWithError(w, http.StatusBadRequest, "Account with that email already exists", err)
+			return
+		}
+		if strings.Contains(err.Error(), "username"){
+			respondWithError(w, http.StatusBadRequest, "Account with that username already exists", err)
+			return
+		}
+		respondWithError(w, http.StatusInternalServerError, "Failed to add the player to DB", err)
 		return
 	}
 
